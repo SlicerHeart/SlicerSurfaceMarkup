@@ -39,8 +39,6 @@
 
 // GridSurface Markups MRML includes
 #include "vtkMRMLMarkupsBezierSurfaceNode.h"
-#include "vtkMRMLMarkupsSlicingContourNode.h"
-#include "vtkMRMLMarkupsDistanceContourNode.h"
 
 // MRML includes
 #include <vtkMRMLModelNode.h>
@@ -84,8 +82,6 @@ void vtkSlicerGridSurfaceMarkupsLogic::RegisterNodes()
   vtkMRMLScene *scene = this->GetMRMLScene();
 
   // Nodes
-  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLMarkupsSlicingContourNode>::New());
-  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLMarkupsDistanceContourNode>::New());
   scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLMarkupsBezierSurfaceNode>::New());
 }
 
@@ -121,16 +117,6 @@ void vtkSlicerGridSurfaceMarkupsLogic::ObserveMRMLScene()
     // bar is triggered when leave it
     this->GetMRMLScene()->StartState(vtkMRMLScene::BatchProcessState);
 
-    auto slicingContourNode = vtkSmartPointer<vtkMRMLMarkupsSlicingContourNode>::New();
-    selectionNode->AddNewPlaceNodeClassNameToList(slicingContourNode->GetClassName(),
-                                                  slicingContourNode->GetAddIcon(),
-                                                  slicingContourNode->GetMarkupType());
-
-    auto distanceContourNode = vtkSmartPointer<vtkMRMLMarkupsDistanceContourNode>::New();
-    selectionNode->AddNewPlaceNodeClassNameToList(distanceContourNode->GetClassName(),
-                                                  distanceContourNode->GetAddIcon(),
-                                                  distanceContourNode->GetMarkupType());
-
     auto bezierSurfaceNode= vtkSmartPointer<vtkMRMLMarkupsBezierSurfaceNode>::New();
     selectionNode->AddNewPlaceNodeClassNameToList(bezierSurfaceNode->GetClassName(),
                                                   bezierSurfaceNode->GetAddIcon(),
@@ -141,28 +127,4 @@ void vtkSlicerGridSurfaceMarkupsLogic::ObserveMRMLScene()
     }
 
  this->Superclass::ObserveMRMLScene();
-}
-
-//---------------------------------------------------------------------------
-void vtkSlicerGridSurfaceMarkupsLogic::OnMRMLSceneNodeAdded(vtkMRMLNode* node)
-{
-  Superclass::OnMRMLSceneNodeAdded(node);
-
-  auto markupsNode = vtkMRMLMarkupsNode::SafeDownCast(node);
-  if (!markupsNode)
-    {
-    return;
-    }
-
-  auto markupsSlicingContourNode = vtkMRMLMarkupsSlicingContourNode::SafeDownCast(node);
-  auto markupsDistanceContourNode = vtkMRMLMarkupsDistanceContourNode::SafeDownCast(node);
-
-  if ( !markupsSlicingContourNode && !markupsDistanceContourNode)
-    {
-    return;
-    }
-
-  auto displayNode = vtkMRMLMarkupsDisplayNode::SafeDownCast(markupsNode->GetDisplayNode());
-  displayNode->PropertiesLabelVisibilityOff();
-  displayNode->SetSnapMode(vtkMRMLMarkupsDisplayNode::SnapModeUnconstrained);
 }

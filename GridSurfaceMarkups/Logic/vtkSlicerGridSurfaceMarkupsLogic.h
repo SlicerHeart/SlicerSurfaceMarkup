@@ -58,8 +58,6 @@ protected:
   void ObserveMRMLScene() override;
   void RegisterNodes() override;
 
-  void OnMRMLSceneNodeAdded(vtkMRMLNode* node) override;
-
 private:
   vtkSlicerGridSurfaceMarkupsLogic(const vtkSlicerGridSurfaceMarkupsLogic&) = delete;
   void operator=(const vtkSlicerGridSurfaceMarkupsLogic&) = delete;

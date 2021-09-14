@@ -40,8 +40,6 @@
 
 // MRML includes
 #include "vtkMRMLMarkupsBezierSurfaceNode.h"
-#include "vtkMRMLMarkupsSlicingContourNode.h"
-#include "vtkMRMLMarkupsDistanceContourNode.h"
 
 // Qt includes
 #include <QDebug>
@@ -56,8 +54,6 @@
 #include <vtkSlicerLineWidget.h>
 
 // GridSurface Markups VTKWidgets includes
-#include "vtkSlicerSlicingContourWidget.h"
-#include "vtkSlicerDistanceContourWidget.h"
 #include "vtkSlicerBezierSurfaceWidget.h"
 
 #include <qSlicerModuleManager.h>
@@ -160,31 +156,10 @@ void qSlicerGridSurfaceMarkupsModule::setup()
    return;
    }
 
- // Register markups
- vtkNew<vtkMRMLMarkupsSlicingContourNode> slicingContourNode;
- vtkNew<vtkSlicerSlicingContourWidget> slicingContourWidget;
- markupsLogic->RegisterMarkupsNode(slicingContourNode, slicingContourWidget);
-
- vtkNew<vtkMRMLMarkupsDistanceContourNode> distanceContourNode;
- vtkNew<vtkSlicerDistanceContourWidget> distanceContourWidget;
- markupsLogic->RegisterMarkupsNode(distanceContourNode, distanceContourWidget);
-
- vtkNew<vtkMRMLMarkupsBezierSurfaceNode> bezierSurfaceNode;
- vtkNew<vtkSlicerBezierSurfaceWidget> bezierSurfaceWidget;
- markupsLogic->RegisterMarkupsNode(bezierSurfaceNode, bezierSurfaceWidget);
-
- // qSlicerModuleManager* moduleManager = qSlicerCoreApplication::application()->moduleManager();
- // if (!moduleManager)
- //   {
- //   return;
- //   }
-
- // qSlicerAbstractCoreModule* markupsModule = moduleManager->module("Markups");
- // if(!markupsModule)
- //   {
- //   qCritical() << Q_FUNC_INFO << ": Could not get the Markups module.";
- //   return;
- //   }
+  // Register markups
+  vtkNew<vtkMRMLMarkupsBezierSurfaceNode> bezierSurfaceNode;
+  vtkNew<vtkSlicerBezierSurfaceWidget> bezierSurfaceWidget;
+  markupsLogic->RegisterMarkupsNode(bezierSurfaceNode, bezierSurfaceWidget);
 }
 
 //-----------------------------------------------------------------------------
@@ -203,10 +178,7 @@ vtkMRMLAbstractLogic* qSlicerGridSurfaceMarkupsModule::createLogic()
 //-----------------------------------------------------------------------------
 QStringList qSlicerGridSurfaceMarkupsModule::associatedNodeTypes() const
 {
-  return QStringList()
-    << "vtkMRMLMarkupsSlicingContourNode"
-    << "vtkMRMLMarkupsDistanceContourNode"
-    << "vtkMRMLMarkupsBezierSurfaceNode";
+  return QStringList() << "vtkMRMLMarkupsBezierSurfaceNode";
 }
 
 //-----------------------------------------------------------------------------

@@ -12,18 +12,6 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  vtkSlicerSlicingContourWidget.h
-  vtkSlicerSlicingContourWidget.cxx
-  vtkSlicerSlicingContourRepresentation3D.h
-  vtkSlicerSlicingContourRepresentation3D.cxx
-  vtkSlicerSlicingContourRepresentation2D.h
-  vtkSlicerSlicingContourRepresentation2D.cxx
-  vtkSlicerDistanceContourWidget.h
-  vtkSlicerDistanceContourWidget.cxx
-  vtkSlicerDistanceContourRepresentation3D.h
-  vtkSlicerDistanceContourRepresentation3D.cxx
-  vtkSlicerDistanceContourRepresentation2D.h
-  vtkSlicerDistanceContourRepresentation2D.cxx
   vtkSlicerBezierSurfaceWidget.h
   vtkSlicerBezierSurfaceWidget.cxx
   vtkSlicerBezierSurfaceRepresentation3D.h
@@ -32,8 +20,6 @@ set(${KIT}_SRCS
   vtkSlicerBezierSurfaceRepresentation2D.cxx
   vtkBezierSurfaceSource.h
   vtkBezierSurfaceSource.cxx
-  vtkSlicerShaderHelper.h
-  vtkSlicerShaderHelper.cxx
   )
 
 set(${KIT}_TARGET_LIBRARIES
