@@ -80,18 +80,36 @@ public:
   /// \sa vtkMRMLNode::CopyContent
   vtkMRMLCopyContentDefaultMacro(vtkMRMLMarkupsBezierSurfaceNode);
 
+  void ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) override;
+
+  ///@{
+  /// Number of control points on each side of the grid
+  vtkGetVector3Macro(GridSize, int);
+  void SetGridSize(const int gridSize[2]);
+  void SetGridSize(int a, int b);
+  ///@}
+
+  //TODO:
+  void UpdateSurfaceFromControlPoints();
+  //TOOD:
+  void UpdateControlPointsFromSurface();
+
+protected:
+  bool IsUpdatingControlPointsFromSurface{false};
+  bool IsUpdatingSurfaceFromControlPoints{false};
+
+  int GridSize[2] { 4, 4 };
+
 protected:
   vtkMRMLMarkupsBezierSurfaceNode();
   ~vtkMRMLMarkupsBezierSurfaceNode() override = default;
 
 private:
- vtkWeakPointer<vtkMRMLModelNode> Target;
+  vtkWeakPointer<vtkMRMLModelNode> Target;
 
 private:
- vtkMRMLMarkupsBezierSurfaceNode(const vtkMRMLMarkupsBezierSurfaceNode&);
- void operator=(const vtkMRMLMarkupsBezierSurfaceNode&);
-
-
+  vtkMRMLMarkupsBezierSurfaceNode(const vtkMRMLMarkupsBezierSurfaceNode&);
+  void operator=(const vtkMRMLMarkupsBezierSurfaceNode&);
 };
 
 #endif //__vtkmrmlmarkupsbeziersurfacenode_h_
