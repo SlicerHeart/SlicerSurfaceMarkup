@@ -37,8 +37,8 @@
 
 ==============================================================================*/
 
-#ifndef __vtkslicerbeziersurfacewidgetrepresentation3d_h_
-#define __vtkslicerbeziersurfacewidgetrepresentation3d_h_
+#ifndef __vtkslicergridsurfacewidgetrepresentation3d_h_
+#define __vtkslicergridsurfacewidgetrepresentation3d_h_
 
 #include "vtkSlicerGridSurfaceMarkupsModuleVTKWidgetsExport.h"
 
@@ -58,15 +58,15 @@ class vtkPolyData;
 class vtkPolyDataNormals;
 class vtkPoints;
 class vtkTubeFilter;
-class vtkMRMLMarkupsBezierSurfaceNode;
+class vtkMRMLMarkupsGridSurfaceNode;
 
 //------------------------------------------------------------------------------
-class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkSlicerBezierSurfaceRepresentation3D
+class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkSlicerGridSurfaceRepresentation3D
 : public vtkSlicerMarkupsWidgetRepresentation3D
 {
 public:
-  static vtkSlicerBezierSurfaceRepresentation3D* New();
-  vtkTypeMacro(vtkSlicerBezierSurfaceRepresentation3D, vtkSlicerMarkupsWidgetRepresentation3D);
+  static vtkSlicerGridSurfaceRepresentation3D* New();
+  vtkTypeMacro(vtkSlicerGridSurfaceRepresentation3D, vtkSlicerMarkupsWidgetRepresentation3D);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
   void UpdateFromMRML(vtkMRMLNode* caller, unsigned long event, void* callData=nullptr) override;
@@ -83,7 +83,7 @@ public:
   double *GetBounds() override;
 
 protected:
-  // Bezier surface releated elements
+  // Bezier surface related elements
   vtkSmartPointer<vtkBezierSurfaceSource> BezierSurfaceSource;
   vtkSmartPointer<vtkPoints> BezierSurfaceControlPoints;
   vtkSmartPointer<vtkPolyDataMapper> BezierSurfaceMapper;
@@ -97,15 +97,15 @@ protected:
   vtkSmartPointer<vtkActor> ControlPolygonActor;
 
 protected:
-  vtkSlicerBezierSurfaceRepresentation3D();
-  ~vtkSlicerBezierSurfaceRepresentation3D() override;
+  vtkSlicerGridSurfaceRepresentation3D();
+  ~vtkSlicerGridSurfaceRepresentation3D() override;
 
-  void UpdateControlPolygon(vtkMRMLMarkupsBezierSurfaceNode*);
-  void UpdateBezierSurface(vtkMRMLMarkupsBezierSurfaceNode*);
+  void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
+  void UpdateBezierSurface(vtkMRMLMarkupsGridSurfaceNode*);
 
 private:
-  vtkSlicerBezierSurfaceRepresentation3D(const vtkSlicerBezierSurfaceRepresentation3D&) = delete;
-  void operator=(const vtkSlicerBezierSurfaceRepresentation3D&) = delete;
+  vtkSlicerGridSurfaceRepresentation3D(const vtkSlicerGridSurfaceRepresentation3D&) = delete;
+  void operator=(const vtkSlicerGridSurfaceRepresentation3D&) = delete;
 };
 
-#endif // __vtkslicerbeziersurfacewidgetrepresentation3d_h_
+#endif // __vtkslicergridsurfacewidgetrepresentation3d_h_

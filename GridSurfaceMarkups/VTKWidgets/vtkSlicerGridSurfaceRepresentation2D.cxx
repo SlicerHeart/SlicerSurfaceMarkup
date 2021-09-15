@@ -35,35 +35,24 @@
   Oslo University Hospital) and was supported by The Research Council of Norway
   through the ALive project (grant nr. 311393).
 
-==============================================================================*/
-#ifndef __vtkslicerbeziersurfacewidget_h_
-#define __vtkslicerbeziersurfacewidget_h_
+  ==============================================================================*/
 
-#include "vtkSlicerGridSurfaceMarkupsModuleVTKWidgetsExport.h"
+#include "vtkSlicerGridSurfaceRepresentation2D.h"
 
-#include <vtkSlicerMarkupsWidget.h>
+//------------------------------------------------------------------------------
+vtkStandardNewMacro(vtkSlicerGridSurfaceRepresentation2D);
 
-class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkSlicerBezierSurfaceWidget
-: public vtkSlicerMarkupsWidget
+//------------------------------------------------------------------------------
+vtkSlicerGridSurfaceRepresentation2D::vtkSlicerGridSurfaceRepresentation2D()
 {
-public:
-  static vtkSlicerBezierSurfaceWidget *New();
-  vtkTypeMacro(vtkSlicerBezierSurfaceWidget, vtkSlicerMarkupsWidget);
 
-  void CreateDefaultRepresentation(vtkMRMLMarkupsDisplayNode* markupsDisplayNode,
-                                  vtkMRMLAbstractViewNode* viewNode,
-                                  vtkRenderer* renderer) override;
+}
 
-  /// Create instance of the markups widget
-  vtkSlicerMarkupsWidget* CreateInstance() const override;
+//------------------------------------------------------------------------------
+vtkSlicerGridSurfaceRepresentation2D::~vtkSlicerGridSurfaceRepresentation2D() = default;
 
-protected:
-  vtkSlicerBezierSurfaceWidget();
-  ~vtkSlicerBezierSurfaceWidget();
-
-private:
-  vtkSlicerBezierSurfaceWidget(const vtkSlicerBezierSurfaceWidget&) = delete;
-  void operator=(const vtkSlicerBezierSurfaceWidget) = delete;
-};
-
-#endif // __vtkslicerbeziersurfacewidget_h_
+//------------------------------------------------------------------------------
+void vtkSlicerGridSurfaceRepresentation2D::PrintSelf(ostream& os, vtkIndent indent)
+{
+  Superclass::PrintSelf(os, indent);
+}

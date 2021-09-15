@@ -38,7 +38,7 @@
 #include "vtkSlicerGridSurfaceMarkupsLogic.h"
 
 // GridSurface Markups MRML includes
-#include "vtkMRMLMarkupsBezierSurfaceNode.h"
+#include "vtkMRMLMarkupsGridSurfaceNode.h"
 
 // MRML includes
 #include <vtkMRMLModelNode.h>
@@ -82,49 +82,48 @@ void vtkSlicerGridSurfaceMarkupsLogic::RegisterNodes()
   vtkMRMLScene *scene = this->GetMRMLScene();
 
   // Nodes
-  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLMarkupsBezierSurfaceNode>::New());
+  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLMarkupsGridSurfaceNode>::New());
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerGridSurfaceMarkupsLogic::ObserveMRMLScene()
 {
   if (!this->GetMRMLScene())
-    {
+  {
     return;
-    }
+  }
 
-  vtkMRMLApplicationLogic *mrmlAppLogic = this->GetMRMLApplicationLogic();
+  vtkMRMLApplicationLogic* mrmlAppLogic = this->GetMRMLApplicationLogic();
   if (!mrmlAppLogic)
-    {
-    vtkErrorMacro("ObserveMRMLScene: invalid MRML Application Logic.") ;
+  {
+    vtkErrorMacro("ObserveMRMLScene: invalid MRML Application Logic.");
     return;
-    }
+  }
 
-  vtkMRMLNode* node =
-    this->GetMRMLScene()->GetNodeByID(this->GetSelectionNodeID().c_str());
+  vtkMRMLNode* node = this->GetMRMLScene()->GetNodeByID(this->GetSelectionNodeID().c_str());
   if (!node)
-    {
+  {
     vtkErrorMacro("Observe MRMLScene: invalid Selection Node");
     return;
-    }
+  }
 
   // add known markup types to the selection node
-  vtkMRMLSelectionNode *selectionNode =
+  vtkMRMLSelectionNode* selectionNode =
     vtkMRMLSelectionNode::SafeDownCast(node);
   if (selectionNode)
-    {
+  {
     // got into batch process mode so that an update on the mouse mode tool
     // bar is triggered when leave it
     this->GetMRMLScene()->StartState(vtkMRMLScene::BatchProcessState);
 
-    auto bezierSurfaceNode= vtkSmartPointer<vtkMRMLMarkupsBezierSurfaceNode>::New();
-    selectionNode->AddNewPlaceNodeClassNameToList(bezierSurfaceNode->GetClassName(),
-                                                  bezierSurfaceNode->GetAddIcon(),
-                                                  bezierSurfaceNode->GetMarkupType());
+    auto gridSurfaceNode = vtkSmartPointer<vtkMRMLMarkupsGridSurfaceNode>::New();
+    selectionNode->AddNewPlaceNodeClassNameToList(gridSurfaceNode->GetClassName(),
+      gridSurfaceNode->GetAddIcon(),
+      gridSurfaceNode->GetMarkupType());
 
     // trigger an update on the mouse mode toolbar
     this->GetMRMLScene()->EndState(vtkMRMLScene::BatchProcessState);
-    }
+  }
 
  this->Superclass::ObserveMRMLScene();
 }

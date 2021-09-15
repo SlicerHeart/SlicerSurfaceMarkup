@@ -37,10 +37,10 @@
 
   ==============================================================================*/
 
-#include "vtkSlicerBezierSurfaceWidget.h"
+#include "vtkSlicerGridSurfaceWidget.h"
 
 // GridSurface Markups VTKWidgets include
-#include "vtkSlicerBezierSurfaceRepresentation3D.h"
+#include "vtkSlicerGridSurfaceRepresentation3D.h"
 
 // VTK includes
 #include <vtkObjectFactory.h>
@@ -49,31 +49,30 @@
 #include <vtkSlicerLineRepresentation2D.h>
 
 //------------------------------------------------------------------------------
-vtkStandardNewMacro(vtkSlicerBezierSurfaceWidget);
+vtkStandardNewMacro(vtkSlicerGridSurfaceWidget);
 
 //------------------------------------------------------------------------------
-vtkSlicerBezierSurfaceWidget::vtkSlicerBezierSurfaceWidget()
+vtkSlicerGridSurfaceWidget::vtkSlicerGridSurfaceWidget()
 {
-
 }
 
 //------------------------------------------------------------------------------
-vtkSlicerBezierSurfaceWidget::~vtkSlicerBezierSurfaceWidget() = default;
+vtkSlicerGridSurfaceWidget::~vtkSlicerGridSurfaceWidget() = default;
 
 //------------------------------------------------------------------------------
-void vtkSlicerBezierSurfaceWidget::CreateDefaultRepresentation(vtkMRMLMarkupsDisplayNode* markupsDisplayNode,
-                                                                vtkMRMLAbstractViewNode* viewNode,
-                                                                vtkRenderer* renderer)
+void vtkSlicerGridSurfaceWidget::CreateDefaultRepresentation(vtkMRMLMarkupsDisplayNode* markupsDisplayNode,
+                                                             vtkMRMLAbstractViewNode* viewNode,
+                                                             vtkRenderer* renderer)
 {
   vtkSmartPointer<vtkSlicerMarkupsWidgetRepresentation> rep = nullptr;
   if (vtkMRMLSliceNode::SafeDownCast(viewNode))
-    {
+  {
     rep = vtkSmartPointer<vtkSlicerLineRepresentation2D>::New();
-    }
+  }
   else
-    {
-    rep = vtkSmartPointer<vtkSlicerBezierSurfaceRepresentation3D>::New();
-    }
+  {
+    rep = vtkSmartPointer<vtkSlicerGridSurfaceRepresentation3D>::New();
+  }
   this->SetRenderer(renderer);
   this->SetRepresentation(rep);
   rep->SetViewNode(viewNode);
@@ -82,15 +81,15 @@ void vtkSlicerBezierSurfaceWidget::CreateDefaultRepresentation(vtkMRMLMarkupsDis
 }
 
 //------------------------------------------------------------------------------
-vtkSlicerMarkupsWidget* vtkSlicerBezierSurfaceWidget::CreateInstance() const
+vtkSlicerMarkupsWidget* vtkSlicerGridSurfaceWidget::CreateInstance() const
 {
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkSlcierBezierSurfaceWidget");
   if(ret)
-    {
-    return static_cast<vtkSlicerBezierSurfaceWidget*>(ret);
-    }
+  {
+    return static_cast<vtkSlicerGridSurfaceWidget*>(ret);
+  }
 
-  vtkSlicerBezierSurfaceWidget* result = new vtkSlicerBezierSurfaceWidget;
+  vtkSlicerGridSurfaceWidget* result = new vtkSlicerGridSurfaceWidget;
 #ifdef VTK_HAS_INITIALIZE_OBJECT_BASE
   result->InitializeObjectBase();
 #endif

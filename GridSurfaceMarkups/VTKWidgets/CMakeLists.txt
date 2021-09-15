@@ -12,12 +12,12 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  vtkSlicerBezierSurfaceWidget.h
-  vtkSlicerBezierSurfaceWidget.cxx
-  vtkSlicerBezierSurfaceRepresentation3D.h
-  vtkSlicerBezierSurfaceRepresentation3D.cxx
-  vtkSlicerBezierSurfaceRepresentation2D.h
-  vtkSlicerBezierSurfaceRepresentation2D.cxx
+  vtkSlicerGridSurfaceWidget.h
+  vtkSlicerGridSurfaceWidget.cxx
+  vtkSlicerGridSurfaceRepresentation3D.h
+  vtkSlicerGridSurfaceRepresentation3D.cxx
+  vtkSlicerGridSurfaceRepresentation2D.h
+  vtkSlicerGridSurfaceRepresentation2D.cxx
   vtkBezierSurfaceSource.h
   vtkBezierSurfaceSource.cxx
   )

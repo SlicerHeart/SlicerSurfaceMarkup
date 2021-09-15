@@ -8,8 +8,8 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  vtkMRMLMarkupsBezierSurfaceNode.h
-  vtkMRMLMarkupsBezierSurfaceNode.cxx
+  vtkMRMLMarkupsGridSurfaceNode.h
+  vtkMRMLMarkupsGridSurfaceNode.cxx
   )
 
 set(${KIT}_TARGET_LIBRARIES

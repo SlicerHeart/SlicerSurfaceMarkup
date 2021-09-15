@@ -1,8 +1,8 @@
 /*==============================================================================
 
- Distributed under the OSI-approved BSD 3-Clause License.
+  Distributed under the OSI-approved BSD 3-Clause License.
 
-  Copyright (c) Oslo University Hospital. All rights reserved.
+  Copyright (c) Children's Hospital of Philadelphia. All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -15,9 +15,9 @@
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
 
-  * Neither the name of Oslo University Hospital nor the names
-    of Contributors may be used to endorse or promote products derived
-    from this software without specific prior written permission.
+  * Neither the name of Kitware, Inc. nor the names of Contributors
+    may be used to endorse or promote products derived from this
+    software without specific prior written permission.
 
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -31,28 +31,30 @@
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-  This file was originally developed by Rafael Palomar (The Intervention Centre,
-  Oslo University Hospital) and was supported by The Research Council of Norway
-  through the ALive project (grant nr. 311393).
+  This file was originally developed by Csaba Pinter (Pixel Medical /
+  Ebatinca).
 
-  ==============================================================================*/
+==============================================================================*/
 
-#include "vtkSlicerBezierSurfaceRepresentation2D.h"
+#ifndef __qSlicerMarkupsGridSurfaceWidgetPlugin_h
+#define __qSlicerMarkupsGridSurfaceWidgetPlugin_h
 
-//------------------------------------------------------------------------------
-vtkStandardNewMacro(vtkSlicerBezierSurfaceRepresentation2D);
+#include "qSlicerGridSurfaceMarkupsModuleWidgetsAbstractPlugin.h"
 
-//------------------------------------------------------------------------------
-vtkSlicerBezierSurfaceRepresentation2D::vtkSlicerBezierSurfaceRepresentation2D()
+class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_PLUGINS_EXPORT qSlicerMarkupsGridSurfaceWidgetPlugin
+    : public QObject, public qSlicerMarkupsModuleWidgetsAbstractPlugin
 {
+  Q_OBJECT
 
-}
+public:
+  qSlicerMarkupsGridSurfaceWidgetPlugin(QObject *_parent = nullptr);
 
-//------------------------------------------------------------------------------
-vtkSlicerBezierSurfaceRepresentation2D::~vtkSlicerBezierSurfaceRepresentation2D() = default;
+  QWidget *createWidget(QWidget *_parent) override;
+  QString  domXml() const override;
+  QString  includeFile() const override;
+  bool     isContainer() const override;
+  QString  name() const override;
 
-//------------------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation2D::PrintSelf(ostream& os, vtkIndent indent)
-{
-  Superclass::PrintSelf(os, indent);
-}
+};
+
+#endif

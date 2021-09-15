@@ -37,7 +37,7 @@
 
 ==============================================================================*/
 
-#include "vtkMRMLMarkupsBezierSurfaceNode.h"
+#include "vtkMRMLMarkupsGridSurfaceNode.h"
 
 // MRML includes
 #include <vtkMRMLScene.h>
@@ -54,10 +54,10 @@
 const int NUMBER_OF_PLANE_CONTROL_POINTS = 3; // 3 points used for initial plane definition, then filled with the rest
 
 //--------------------------------------------------------------------------------
-vtkMRMLNodeNewMacro(vtkMRMLMarkupsBezierSurfaceNode);
+vtkMRMLNodeNewMacro(vtkMRMLMarkupsGridSurfaceNode);
 
 //--------------------------------------------------------------------------------
-vtkMRMLMarkupsBezierSurfaceNode::vtkMRMLMarkupsBezierSurfaceNode()
+vtkMRMLMarkupsGridSurfaceNode::vtkMRMLMarkupsGridSurfaceNode()
   :Superclass()
 {
   this->RequiredNumberOfControlPoints = NUMBER_OF_PLANE_CONTROL_POINTS;
@@ -69,74 +69,123 @@ vtkMRMLMarkupsBezierSurfaceNode::vtkMRMLMarkupsBezierSurfaceNode()
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLMarkupsBezierSurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLMarkupsGridSurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   Superclass::PrintSelf(os,indent);
 }
 
 //---------------------------------------------------------------------------
-void vtkMRMLMarkupsBezierSurfaceNode::ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData)
+void vtkMRMLMarkupsGridSurfaceNode::ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData)
 {
   if (caller == this->CurveInputPoly->GetPoints() || caller == this->GetParentTransformNode())
   {
-    this->UpdateSurfaceFromControlPoints();
+    this->UpdateGridSurfaceFromControlPoints();
     //this->UpdateObjectToWorldMatrix();
   }
   else if (caller == this && event == vtkMRMLMarkupsNode::PointPositionDefinedEvent)
   {
-    this->UpdateControlPointsFromSurface();
+    this->UpdateControlPointsFromGridSurface();
   }
   Superclass::ProcessMRMLEvents(caller, event, callData);
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLMarkupsBezierSurfaceNode::SetGridSize(const int gridSize[2])
+void vtkMRMLMarkupsGridSurfaceNode::SetGridSurfaceType(int roiType)
 {
-  this->SetGridSize(gridSize[0], gridSize[1]);
+  if (this->GridSurfaceType == roiType)
+    {
+    return;
+    }
+
+  this->GridSurfaceType = roiType;
+
+  this->UpdateGridSurfaceFromControlPoints();
+  this->Modified();
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLMarkupsBezierSurfaceNode::SetGridSize(int a, int b)
+const char* vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(int gridSurfaceType)
 {
-  if (this->GridSize[0] == a && this->GridSize[1] == b)
+  switch (gridSurfaceType)
+    {
+    case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeBezier:
+      return "Bezier";
+    //case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeThinPlate:
+    //  return "ThinPlate";
+    default:
+      break;
+    }
+  return "";
+}
+
+//-----------------------------------------------------------
+int vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeFromString(const char* name)
+{
+  if (name == nullptr)
+    {
+    // invalid name
+    return -1;
+    }
+  for (int i = 0; i < vtkMRMLMarkupsGridSurfaceNode::GridSurfaceType_Last; i++)
+    {
+    if (strcmp(name, vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(i)) == 0)
+      {
+      // found a matching name
+      return i;
+      }
+    }
+  // unknown name
+  return -1;
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::SetGridResolution(const int gridResolution[2])
+{
+  this->SetGridResolution(gridResolution[0], gridResolution[1]);
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::SetGridResolution(int a, int b)
+{
+  if (this->GridResolution[0] == a && this->GridResolution[1] == b)
   {
     return;
   }
 
   MRMLNodeModifyBlocker blocker(this);
-  this->GridSize[0] = a;
-  this->GridSize[1] = b;
-  this->UpdateControlPointsFromSurface();
+  this->GridResolution[0] = a;
+  this->GridResolution[1] = b;
+  this->UpdateControlPointsFromGridSurface();
   this->Modified();
 }
 
 //---------------------------------------------------------------------------
-void vtkMRMLMarkupsBezierSurfaceNode::UpdateSurfaceFromControlPoints()
+void vtkMRMLMarkupsGridSurfaceNode::UpdateGridSurfaceFromControlPoints()
 {
-  if (this->IsUpdatingControlPointsFromSurface || this->IsUpdatingSurfaceFromControlPoints)
+  if (this->IsUpdatingControlPointsFromGridSurface || this->IsUpdatingGridSurfaceFromControlPoints)
   {
     return;
   }
 
-  this->IsUpdatingSurfaceFromControlPoints = true;
+  this->IsUpdatingGridSurfaceFromControlPoints = true;
 
   // Block events in this scope
   MRMLNodeModifyBlocker blocker(this);
 
   //TODO:
 
-  this->IsUpdatingSurfaceFromControlPoints = false;
+  this->IsUpdatingGridSurfaceFromControlPoints = false;
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLMarkupsBezierSurfaceNode::UpdateControlPointsFromSurface()
+void vtkMRMLMarkupsGridSurfaceNode::UpdateControlPointsFromGridSurface()
 {
-  if (this->IsUpdatingControlPointsFromSurface || this->IsUpdatingSurfaceFromControlPoints)
+  if (this->IsUpdatingControlPointsFromGridSurface || this->IsUpdatingGridSurfaceFromControlPoints)
   {
     return;
   }
 
-  this->IsUpdatingControlPointsFromSurface = true;
+  this->IsUpdatingControlPointsFromGridSurface = true;
 
   // Block events in this scope
   MRMLNodeModifyBlocker blocker(this);
@@ -171,20 +220,20 @@ void vtkMRMLMarkupsBezierSurfaceNode::UpdateControlPointsFromSurface()
     //
 
     // Vectors in both directions for displacement between adjacent control points
-    double vector_a[3] = {0.0}; // = vector_0_1 / GridSize[0]
+    double vector_a[3] = {0.0}; // = vector_0_1 / GridResolution[0]
     vtkMath::Subtract(position_1, position_0, vector_a);
-    vtkMath::MultiplyScalar(vector_a, 1.0 / (double)(this->GridSize[0] - 1));
-    double vector_b[3] = { vector_1_2[0], vector_1_2[1], vector_1_2[2] }; // = vector_1_2 / GridSize[0]
-    vtkMath::MultiplyScalar(vector_b, 1.0 / (double)(this->GridSize[1] - 1));
+    vtkMath::MultiplyScalar(vector_a, 1.0 / (double)(this->GridResolution[0] - 1));
+    double vector_b[3] = { vector_1_2[0], vector_1_2[1], vector_1_2[2] }; // = vector_1_2 / GridResolution[0]
+    vtkMath::MultiplyScalar(vector_b, 1.0 / (double)(this->GridResolution[1] - 1));
 
     // Fill in control point list
     vtkNew<vtkPoints> controlPoints;
-    for (int b=0; b<this->GridSize[1]; ++b)
+    for (int b=0; b<this->GridResolution[1]; ++b)
     {
       double vector_b_scaled[3] ={vector_b[0], vector_b[1], vector_b[2]};
       vtkMath::MultiplyScalar(vector_b_scaled, b);
 
-      for (int a=0; a<this->GridSize[0]; ++a)
+      for (int a=0; a<this->GridResolution[0]; ++a)
       {
         double vector_a_scaled[3] ={vector_a[0], vector_a[1], vector_a[2]};
         vtkMath::MultiplyScalar(vector_a_scaled, a);
@@ -200,7 +249,7 @@ void vtkMRMLMarkupsBezierSurfaceNode::UpdateControlPointsFromSurface()
     this->SetControlPointPositionsWorld(controlPoints);
   }
   else if (numberOfControlPoints > NUMBER_OF_PLANE_CONTROL_POINTS
-    && numberOfControlPoints != this->GridSize[0] * this->GridSize[1])
+    && numberOfControlPoints != this->GridResolution[0] * this->GridResolution[1])
   {
     // Re-generate new control point positions from current control points
     // after the grid size has been changed.
@@ -209,9 +258,9 @@ void vtkMRMLMarkupsBezierSurfaceNode::UpdateControlPointsFromSurface()
     vtkNew<vtkPoints> pointsWorld;
     //pointsWorld->InsertNextPoint(center_World);
     //this->SetControlPointPositionsWorld(pointsWorld);
-    this->MaximumNumberOfControlPoints = this->GridSize[0] * this->GridSize[1];
-    this->RequiredNumberOfControlPoints = this->GridSize[0] * this->GridSize[1];
+    this->MaximumNumberOfControlPoints = this->GridResolution[0] * this->GridResolution[1];
+    this->RequiredNumberOfControlPoints = this->GridResolution[0] * this->GridResolution[1];
   }
 
-  this->IsUpdatingControlPointsFromSurface = false;
+  this->IsUpdatingControlPointsFromGridSurface = false;
 }

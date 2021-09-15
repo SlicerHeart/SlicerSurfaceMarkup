@@ -37,9 +37,9 @@
 
   ==============================================================================*/
 
-#include "vtkSlicerBezierSurfaceRepresentation3D.h"
+#include "vtkSlicerGridSurfaceRepresentation3D.h"
 
-#include "vtkMRMLMarkupsBezierSurfaceNode.h"
+#include "vtkMRMLMarkupsGridSurfaceNode.h"
 #include "vtkBezierSurfaceSource.h"
 
 // MRML includes
@@ -62,10 +62,10 @@
 #include <vtkProperty.h>
 
 //------------------------------------------------------------------------------
-vtkStandardNewMacro(vtkSlicerBezierSurfaceRepresentation3D);
+vtkStandardNewMacro(vtkSlicerGridSurfaceRepresentation3D);
 
 //------------------------------------------------------------------------------
-vtkSlicerBezierSurfaceRepresentation3D::vtkSlicerBezierSurfaceRepresentation3D()
+vtkSlicerGridSurfaceRepresentation3D::vtkSlicerGridSurfaceRepresentation3D()
   : Superclass()
 {
   this->BezierSurfaceSource = vtkSmartPointer<vtkBezierSurfaceSource>::New();
@@ -101,24 +101,23 @@ vtkSlicerBezierSurfaceRepresentation3D::vtkSlicerBezierSurfaceRepresentation3D()
 }
 
 //------------------------------------------------------------------------------
-vtkSlicerBezierSurfaceRepresentation3D::~vtkSlicerBezierSurfaceRepresentation3D() = default;
+vtkSlicerGridSurfaceRepresentation3D::~vtkSlicerGridSurfaceRepresentation3D() = default;
 
 //----------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller, unsigned long event, void *callData /*=nullptr*/)
+void vtkSlicerGridSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller, unsigned long event, void *callData /*=nullptr*/)
 {
 
  this->Superclass::UpdateFromMRML(caller, event, callData);
 
- auto gridSurfaceMarkupsBezierSurfaceNode =
-   vtkMRMLMarkupsBezierSurfaceNode::SafeDownCast(this->GetMarkupsNode());
- if (!gridSurfaceMarkupsBezierSurfaceNode || !this->IsDisplayable())
+ auto gridSurfaceMarkupsNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(this->GetMarkupsNode());
+ if (!gridSurfaceMarkupsNode || !this->IsDisplayable())
    {
    this->VisibilityOff();
    return;
    }
 
- this->UpdateBezierSurface(gridSurfaceMarkupsBezierSurfaceNode);
- this->UpdateControlPolygon(gridSurfaceMarkupsBezierSurfaceNode);
+ this->UpdateBezierSurface(gridSurfaceMarkupsNode);
+ this->UpdateControlPolygon(gridSurfaceMarkupsNode);
 
   double diameter = ( this->MarkupsDisplayNode->GetCurveLineSizeMode() == vtkMRMLMarkupsDisplayNode::UseLineDiameter ?
     this->MarkupsDisplayNode->GetLineDiameter() : this->ControlPointSize * this->MarkupsDisplayNode->GetLineThickness() );
@@ -135,7 +134,7 @@ void vtkSlicerBezierSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller,
 }
 
 //----------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation3D::GetActors(vtkPropCollection *pc)
+void vtkSlicerGridSurfaceRepresentation3D::GetActors(vtkPropCollection *pc)
 {
   this->Superclass::GetActors(pc);
   this->BezierSurfaceActor->GetActors(pc);
@@ -143,7 +142,7 @@ void vtkSlicerBezierSurfaceRepresentation3D::GetActors(vtkPropCollection *pc)
 }
 
 //----------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation3D::ReleaseGraphicsResources(
+void vtkSlicerGridSurfaceRepresentation3D::ReleaseGraphicsResources(
   vtkWindow *win)
 {
   this->Superclass::ReleaseGraphicsResources(win);
@@ -152,7 +151,7 @@ void vtkSlicerBezierSurfaceRepresentation3D::ReleaseGraphicsResources(
 }
 
 //----------------------------------------------------------------------
-int vtkSlicerBezierSurfaceRepresentation3D::RenderOverlay(vtkViewport *viewport)
+int vtkSlicerGridSurfaceRepresentation3D::RenderOverlay(vtkViewport *viewport)
 {
   int count=0;
   count = this->Superclass::RenderOverlay(viewport);
@@ -165,7 +164,7 @@ int vtkSlicerBezierSurfaceRepresentation3D::RenderOverlay(vtkViewport *viewport)
 }
 
 //-----------------------------------------------------------------------------
-int vtkSlicerBezierSurfaceRepresentation3D::RenderOpaqueGeometry(
+int vtkSlicerGridSurfaceRepresentation3D::RenderOpaqueGeometry(
   vtkViewport *viewport)
 {
   int count=0;
@@ -185,7 +184,7 @@ int vtkSlicerBezierSurfaceRepresentation3D::RenderOpaqueGeometry(
 }
 
 //-----------------------------------------------------------------------------
-int vtkSlicerBezierSurfaceRepresentation3D::RenderTranslucentPolygonalGeometry(
+int vtkSlicerGridSurfaceRepresentation3D::RenderTranslucentPolygonalGeometry(
   vtkViewport *viewport)
 {
   int count=0;
@@ -208,7 +207,7 @@ int vtkSlicerBezierSurfaceRepresentation3D::RenderTranslucentPolygonalGeometry(
 }
 
 //-----------------------------------------------------------------------------
-vtkTypeBool vtkSlicerBezierSurfaceRepresentation3D::HasTranslucentPolygonalGeometry()
+vtkTypeBool vtkSlicerGridSurfaceRepresentation3D::HasTranslucentPolygonalGeometry()
 {
   if (this->Superclass::HasTranslucentPolygonalGeometry())
     {
@@ -226,7 +225,7 @@ vtkTypeBool vtkSlicerBezierSurfaceRepresentation3D::HasTranslucentPolygonalGeome
 }
 
 //----------------------------------------------------------------------
-double *vtkSlicerBezierSurfaceRepresentation3D::GetBounds()
+double *vtkSlicerGridSurfaceRepresentation3D::GetBounds()
 {
   vtkBoundingBox boundingBox;
   const std::vector<vtkProp*> actors({ this->BezierSurfaceActor, this->ControlPolygonActor });
@@ -237,7 +236,7 @@ double *vtkSlicerBezierSurfaceRepresentation3D::GetBounds()
 
 
 //----------------------------------------------------------------------
-// void vtkSlicerBezierSurfaceRepresentation3D::CanInteract(
+// void vtkSlicerGridSurfaceRepresentation3D::CanInteract(
 //   vtkMRMLInteractionEventData* interactionEventData,
 //   int &foundComponentType, int &foundComponentIndex, double &closestDistance2)
 // {
@@ -259,7 +258,7 @@ double *vtkSlicerBezierSurfaceRepresentation3D::GetBounds()
 // }
 
 //-----------------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation3D::PrintSelf(ostream& os, vtkIndent indent)
+void vtkSlicerGridSurfaceRepresentation3D::PrintSelf(ostream& os, vtkIndent indent)
 {
   //Superclass typedef defined in vtkTypeMacro() found in vtkSetGet.h
   this->Superclass::PrintSelf(os, indent);
@@ -284,7 +283,7 @@ void vtkSlicerBezierSurfaceRepresentation3D::PrintSelf(ostream& os, vtkIndent in
 }
 
 //-----------------------------------------------------------------------------
-// void vtkSlicerBezierSurfaceRepresentation3D::UpdateInteractionPipeline()
+// void vtkSlicerGridSurfaceRepresentation3D::UpdateInteractionPipeline()
 // {
 //   if (!this->MarkupsNode || this->MarkupsNode->GetNumberOfDefinedControlPoints(true) < 16)
 //     {
@@ -296,7 +295,7 @@ void vtkSlicerBezierSurfaceRepresentation3D::PrintSelf(ostream& os, vtkIndent in
 // }
 
 //-----------------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation3D::UpdateBezierSurface(vtkMRMLMarkupsBezierSurfaceNode *node)
+void vtkSlicerGridSurfaceRepresentation3D::UpdateBezierSurface(vtkMRMLMarkupsGridSurfaceNode *node)
 {
   if (!node)
     {
@@ -320,7 +319,7 @@ void vtkSlicerBezierSurfaceRepresentation3D::UpdateBezierSurface(vtkMRMLMarkupsB
 }
 
 //-----------------------------------------------------------------------------
-void vtkSlicerBezierSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsBezierSurfaceNode *node)
+void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode *node)
 {
   if (node->GetNumberOfControlPoints() == 16)
     {

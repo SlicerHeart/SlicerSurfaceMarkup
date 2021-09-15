@@ -37,8 +37,8 @@
 
 ==============================================================================*/
 
-#ifndef __vtkmrmlmarkupsbeziersurfacenode_h_
-#define __vtkmrmlmarkupsbeziersurfacenode_h_
+#ifndef __vtkMRMLMarkupsGridSurfaceNode_h_
+#define __vtkMRMLMarkupsGridSurfaceNode_h_
 
 #include "vtkSlicerGridSurfaceMarkupsModuleMRMLExport.h"
 
@@ -50,12 +50,12 @@
 #include <vtkWeakPointer.h>
 
 //-----------------------------------------------------------------------------
-class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_MRML_EXPORT vtkMRMLMarkupsBezierSurfaceNode
+class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_MRML_EXPORT vtkMRMLMarkupsGridSurfaceNode
 : public vtkMRMLMarkupsNode
 {
 public:
-  static vtkMRMLMarkupsBezierSurfaceNode* New();
-  vtkTypeMacro(vtkMRMLMarkupsBezierSurfaceNode, vtkMRMLMarkupsNode);
+  static vtkMRMLMarkupsGridSurfaceNode* New();
+  vtkTypeMacro(vtkMRMLMarkupsGridSurfaceNode, vtkMRMLMarkupsNode);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
   //--------------------------------------------------------------------------------
@@ -69,47 +69,65 @@ public:
 
   /// Get node XML tag name (like Volume, Model)
   ///
-  const char* GetNodeTagName() override {return "MarkupsBezierSurface";}
+  const char* GetNodeTagName() override {return "MarkupsGridSurface";}
 
   /// Get markup name
-  const char* GetMarkupType() override {return "BezierSurface";}
+  const char* GetMarkupType() override {return "GridSurface";}
 
   /// Get markup short name
-  const char* GetDefaultNodeNamePrefix() override {return "BS";}
+  const char* GetDefaultNodeNamePrefix() override {return "GS";}
 
   /// \sa vtkMRMLNode::CopyContent
-  vtkMRMLCopyContentDefaultMacro(vtkMRMLMarkupsBezierSurfaceNode);
+  vtkMRMLCopyContentDefaultMacro(vtkMRMLMarkupsGridSurfaceNode);
 
   void ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) override;
 
+public:
+  // GridSurface type enum defines the calculation to create the surface from the control points
+  enum
+    {
+    GridSurfaceTypeBezier,
+    //GridSurfaceTypeThinPlate,
+    GridSurfaceType_Last
+    };
+
+  /// GridSurfaceType represents the method that is used to calculate the size of the ROI.
+  /// BOX ROI does not require control points to define a region, while the size of a BOUNDING_BOX ROI will be defined by the control points.
+  vtkGetMacro(GridSurfaceType, int);
+  void SetGridSurfaceType(int gridSurfaceType);
+  static const char* GetGridSurfaceTypeAsString(int gridSurfaceType);
+  static int GetGridSurfaceTypeFromString(const char* gridSurfaceType);
+
   ///@{
   /// Number of control points on each side of the grid
-  vtkGetVector3Macro(GridSize, int);
-  void SetGridSize(const int gridSize[2]);
-  void SetGridSize(int a, int b);
+  vtkGetVector2Macro(GridResolution, int);
+  void SetGridResolution(const int gridResolution[2]);
+  void SetGridResolution(int a, int b);
   ///@}
 
   //TODO:
-  void UpdateSurfaceFromControlPoints();
+  void UpdateGridSurfaceFromControlPoints();
   //TOOD:
-  void UpdateControlPointsFromSurface();
+  void UpdateControlPointsFromGridSurface();
 
 protected:
-  bool IsUpdatingControlPointsFromSurface{false};
-  bool IsUpdatingSurfaceFromControlPoints{false};
+  int GridSurfaceType{vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeBezier};
 
-  int GridSize[2] { 4, 4 };
+  bool IsUpdatingControlPointsFromGridSurface{false};
+  bool IsUpdatingGridSurfaceFromControlPoints{false};
+
+  int GridResolution[2] { 4, 4 };
 
 protected:
-  vtkMRMLMarkupsBezierSurfaceNode();
-  ~vtkMRMLMarkupsBezierSurfaceNode() override = default;
+  vtkMRMLMarkupsGridSurfaceNode();
+  ~vtkMRMLMarkupsGridSurfaceNode() override = default;
 
 private:
   vtkWeakPointer<vtkMRMLModelNode> Target;
 
 private:
-  vtkMRMLMarkupsBezierSurfaceNode(const vtkMRMLMarkupsBezierSurfaceNode&);
-  void operator=(const vtkMRMLMarkupsBezierSurfaceNode&);
+  vtkMRMLMarkupsGridSurfaceNode(const vtkMRMLMarkupsGridSurfaceNode&);
+  void operator=(const vtkMRMLMarkupsGridSurfaceNode&);
 };
 
-#endif //__vtkmrmlmarkupsbeziersurfacenode_h_
+#endif //__vtkMRMLMarkupsGridSurfaceNode_h_

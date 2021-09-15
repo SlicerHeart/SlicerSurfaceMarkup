@@ -36,29 +36,29 @@
   through the ALive project (grant nr. 311393).
 
 ==============================================================================*/
-#ifndef __vtkslicerbeziersurfacewidgetrepresentation3d_h_
-#define __vtkslicerbeziersurfacewidgetrepresentation3d_h_
+#ifndef __vtkslicergridsurfacewidgetrepresentation3d_h_
+#define __vtkslicergridsurfacewidgetrepresentation3d_h_
 
 #include "vtkSlicerGridSurfaceMarkupsModuleVTKWidgetsExport.h"
 
 // Markups VTKWidgets includes
 #include "vtkSlicerLineRepresentation2D.h"
 
-class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkSlicerBezierSurfaceRepresentation2D
+class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkSlicerGridSurfaceRepresentation2D
 : public vtkSlicerLineRepresentation2D
 {
 public:
-  static vtkSlicerBezierSurfaceRepresentation2D* New();
-  vtkTypeMacro(vtkSlicerBezierSurfaceRepresentation2D, vtkSlicerLineRepresentation2D);
+  static vtkSlicerGridSurfaceRepresentation2D* New();
+  vtkTypeMacro(vtkSlicerGridSurfaceRepresentation2D, vtkSlicerLineRepresentation2D);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
 protected:
-  vtkSlicerBezierSurfaceRepresentation2D();
-  ~vtkSlicerBezierSurfaceRepresentation2D() override;
+  vtkSlicerGridSurfaceRepresentation2D();
+  ~vtkSlicerGridSurfaceRepresentation2D() override;
 
 private:
-  vtkSlicerBezierSurfaceRepresentation2D(const vtkSlicerBezierSurfaceRepresentation2D&) = delete;
-  void operator=(const vtkSlicerBezierSurfaceRepresentation2D&) = delete;
+  vtkSlicerGridSurfaceRepresentation2D(const vtkSlicerGridSurfaceRepresentation2D&) = delete;
+  void operator=(const vtkSlicerGridSurfaceRepresentation2D&) = delete;
 };
 
-#endif // __vtkslicerbeziersurfacewidgetrepresentation3d_h_
+#endif // __vtkslicerGridsurfacewidgetrepresentation3d_h_
