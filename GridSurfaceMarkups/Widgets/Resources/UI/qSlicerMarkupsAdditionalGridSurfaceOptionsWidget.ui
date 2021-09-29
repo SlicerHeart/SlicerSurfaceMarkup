@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qSlicerMarkupsGridSurfaceWidget</class>
- <widget class="QWidget" name="qSlicerMarkupsGridSurfaceWidget">
+ <class>qSlicerMarkupsAdditionalGridSurfaceOptionsWidget</class>
+ <widget class="QWidget" name="qSlicerMarkupsAdditionalGridSurfaceOptionsWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -90,7 +90,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QSpinBox" name="gridResolutionSpinBox_A">
+         <widget class="QSpinBox" name="gridResolutionSpinBox_X">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -116,7 +116,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="gridResolutionSpinBox_B">
+         <widget class="QSpinBox" name="gridResolutionSpinBox_Y">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
             <horstretch>0</horstretch>

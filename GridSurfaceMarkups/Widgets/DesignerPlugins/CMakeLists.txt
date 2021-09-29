@@ -4,12 +4,12 @@ set(KIT ${PROJECT_NAME}Plugins)
 set(${KIT}_EXPORT "Q_SLICER_MODULE_${MODULE_NAME_UPPER}_WIDGETS_PLUGINS_EXPORT")
 
 set(${KIT}_SRCS
-  qSlicerMarkupsGridSurfaceWidgetPlugin.cxx
-  qSlicerMarkupsGridSurfaceWidgetPlugin.h
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin.cxx
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin.h
   )
 
 set(${KIT}_MOC_SRCS
-  qSlicerMarkupsGridSurfaceWidgetPlugin.h
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin.h
   )
 
 set(${KIT}_TARGET_LIBRARIES

@@ -36,8 +36,8 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerMarkupsGridSurfaceWidget_h
-#define __qSlicerMarkupsGridSurfaceWidget_h
+#ifndef __qSlicerMarkupsAdditionalGridSurfaceOptionsWidget_h
+#define __qSlicerMarkupsAdditionalGridSurfaceOptionsWidget_h
 
 // Qt includes
 #include <QWidget>
@@ -54,18 +54,18 @@
 
 class vtkMRMLNode;
 class vtkMRMLMarkupsGridSurfaceNode;
-class qSlicerMarkupsGridSurfaceWidget;
-class qSlicerMarkupsGridSurfaceWidgetPrivate;
+class qSlicerMarkupsAdditionalGridSurfaceOptionsWidget;
+class qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate;
 
-class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_EXPORT qSlicerMarkupsGridSurfaceWidget : public qSlicerMarkupsAdditionalOptionsWidget
+class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_EXPORT qSlicerMarkupsAdditionalGridSurfaceOptionsWidget : public qSlicerMarkupsAdditionalOptionsWidget
 {
   Q_OBJECT
   QVTK_OBJECT
 
 public:
   typedef qSlicerMarkupsAdditionalOptionsWidget Superclass;
-  qSlicerMarkupsGridSurfaceWidget(QWidget* parent=nullptr);
-  ~qSlicerMarkupsGridSurfaceWidget() override;
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(QWidget* parent=nullptr);
+  ~qSlicerMarkupsAdditionalGridSurfaceOptionsWidget() override;
 
   /// Returns the current MRML Grid Surface node
   vtkMRMLMarkupsGridSurfaceNode* mrmlGridSurfaceNode()const;
@@ -93,15 +93,15 @@ protected slots:
   /// Internal function to update type of Grid Surface
   void onGridSurfaceTypeParameterChanged();
   /// Handle apply grid surface button click
-  void applyGridResolutionButton();
+  void onApplyGridResolution();
 
 protected:
-  qSlicerMarkupsGridSurfaceWidget(qSlicerMarkupsGridSurfaceWidgetPrivate &d, QWidget* parent=nullptr);
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate &d, QWidget* parent=nullptr);
   void setup();
 
 private:
-  Q_DECLARE_PRIVATE(qSlicerMarkupsGridSurfaceWidget);
-  Q_DISABLE_COPY(qSlicerMarkupsGridSurfaceWidget);
+  Q_DECLARE_PRIVATE(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
+  Q_DISABLE_COPY(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 };
 
 #endif

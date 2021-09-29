@@ -63,7 +63,7 @@
 #include <qSlicerCoreApplication.h>
 
 // GridSurface Markups Widgets
-#include "qSlicerMarkupsGridSurfaceWidget.h"
+#include "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -169,7 +169,7 @@ void qSlicerGridSurfaceMarkupsModule::setup()
 
   // Create and configure the additional widgets
   auto optionsWidgetFactory = qSlicerMarkupsAdditionalOptionsWidgetsFactory::instance();
-  optionsWidgetFactory->registerAdditionalOptionsWidget(new qSlicerMarkupsGridSurfaceWidget()); 
+  optionsWidgetFactory->registerAdditionalOptionsWidget(new qSlicerMarkupsAdditionalGridSurfaceOptionsWidget()); 
 }
 
 //-----------------------------------------------------------------------------

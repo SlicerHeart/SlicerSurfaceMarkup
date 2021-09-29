@@ -10,16 +10,16 @@ set(${KIT}_INCLUDE_DIRECTORIES
   )
 
 set(${KIT}_SRCS
-  qSlicerMarkupsGridSurfaceWidget.cxx
-  qSlicerMarkupsGridSurfaceWidget.h
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.cxx
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h
   )
 
 set(${KIT}_MOC_SRCS
-  qSlicerMarkupsGridSurfaceWidget.h
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h
   )
 
 set(${KIT}_UI_SRCS
-  Resources/UI/qSlicerMarkupsGridSurfaceWidget.ui
+  Resources/UI/qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.ui
   )
 
 set(${KIT}_RESOURCES
