@@ -71,7 +71,7 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkBezierSurfaceSou
   /**
    * Print the properties of the object.
    *
-   * @param os ouptut stream to print the properties to.
+   * @param os output stream to print the properties to.
    * @param indent indentation value.
    */
   void PrintSelf(ostream &os, vtkIndent indent);
@@ -138,7 +138,7 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkBezierSurfaceSou
   void ResetControlPoints();
 
   /**
-   * Get the number of control poits in the parametric direction u.
+   * Get the number of control points in the parametric direction u.
    *
    * @return number of control points in the parametric direction u.
    */
@@ -146,7 +146,7 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkBezierSurfaceSou
   {return this->NumberOfControlPoints[0];}
 
   /**
-   * Get the number of control poits in the parametric direction v.
+   * Get the number of control points in the parametric direction v.
    *
    * @return number of control points in the parametric direction v.
    */

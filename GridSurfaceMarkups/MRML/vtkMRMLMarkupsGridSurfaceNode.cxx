@@ -93,9 +93,9 @@ void vtkMRMLMarkupsGridSurfaceNode::ProcessMRMLEvents(vtkObject* caller, unsigne
 void vtkMRMLMarkupsGridSurfaceNode::SetGridSurfaceType(int roiType)
 {
   if (this->GridSurfaceType == roiType)
-    {
+  {
     return;
-    }
+  }
 
   this->GridSurfaceType = roiType;
 
@@ -107,14 +107,14 @@ void vtkMRMLMarkupsGridSurfaceNode::SetGridSurfaceType(int roiType)
 const char* vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(int gridSurfaceType)
 {
   switch (gridSurfaceType)
-    {
-    case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeBezier:
-      return "Bezier";
+  {
+  case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeBezier:
+    return "Bezier";
     //case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeThinPlate:
     //  return "ThinPlate";
-    default:
-      break;
-    }
+  default:
+    break;
+  }
   return "";
 }
 
@@ -122,18 +122,18 @@ const char* vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(int gridSu
 int vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeFromString(const char* name)
 {
   if (name == nullptr)
-    {
+  {
     // invalid name
     return -1;
-    }
+  }
   for (int i = 0; i < vtkMRMLMarkupsGridSurfaceNode::GridSurfaceType_Last; i++)
-    {
+  {
     if (strcmp(name, vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(i)) == 0)
-      {
+    {
       // found a matching name
       return i;
-      }
     }
+  }
   // unknown name
   return -1;
 }
@@ -145,17 +145,18 @@ void vtkMRMLMarkupsGridSurfaceNode::SetGridResolution(const int gridResolution[2
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLMarkupsGridSurfaceNode::SetGridResolution(int a, int b)
+void vtkMRMLMarkupsGridSurfaceNode::SetGridResolution(int x, int y)
 {
-  if (this->GridResolution[0] == a && this->GridResolution[1] == b)
+  if (this->GridResolution[0] == x && this->GridResolution[1] == y)
   {
     return;
   }
 
   MRMLNodeModifyBlocker blocker(this);
-  this->GridResolution[0] = a;
-  this->GridResolution[1] = b;
-  this->UpdateControlPointsFromGridSurface();
+  this->GridResolution[0] = x;
+  this->GridResolution[1] = y;
+
+  // Modified event triggers update in the representation, which then calls ResampleToNewGridResolution
   this->Modified();
 }
 
@@ -264,3 +265,8 @@ void vtkMRMLMarkupsGridSurfaceNode::UpdateControlPointsFromGridSurface()
 
   this->IsUpdatingControlPointsFromGridSurface = false;
 }
+
+//----------------------------------------------------------------------------
+//void vtkMRMLMarkupsGridSurfaceNode::ResampleToNewGridResolution()
+//{
+//}

@@ -168,8 +168,8 @@ void qSlicerMarkupsGridSurfaceWidget::onMRMLNodeModified()
   int gridResolution[2] = {0};
   gridSurfaceNode->GetGridResolution(gridResolution);
 
-  d->gridResolutionSpinBox_A->setValue(gridResolution[0]);
-  d->gridResolutionSpinBox_B->setValue(gridResolution[1]);
+  d->gridResolutionSpinBox_X->setValue(gridResolution[0]);
+  d->gridResolutionSpinBox_Y->setValue(gridResolution[1]);
 
   d->IsProcessingOnMRMLNodeModified = false;
 }
@@ -224,7 +224,7 @@ void qSlicerMarkupsGridSurfaceWidget::onGridSurfaceTypeParameterChanged()
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::applyGridResolutionButton()
+void qSlicerMarkupsGridSurfaceWidget::onApplyGridResolution()
 {
   Q_D(qSlicerMarkupsGridSurfaceWidget);
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(d->MarkupsNode);
@@ -233,5 +233,5 @@ void qSlicerMarkupsGridSurfaceWidget::applyGridResolutionButton()
     return;
   }
   MRMLNodeModifyBlocker blocker(gridSurfaceNode);
-  gridSurfaceNode->SetGridResolution(d->gridResolutionSpinBox_A->value(), d->gridResolutionSpinBox_B->value());
+  gridSurfaceNode->SetGridResolution(d->gridResolutionSpinBox_X->value(), d->gridResolutionSpinBox_Y->value());
 }

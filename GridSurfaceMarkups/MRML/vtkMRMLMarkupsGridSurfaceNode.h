@@ -102,7 +102,7 @@ public:
   /// Number of control points on each side of the grid
   vtkGetVector2Macro(GridResolution, int);
   void SetGridResolution(const int gridResolution[2]);
-  void SetGridResolution(int a, int b);
+  void SetGridResolution(int x, int y);
   ///@}
 
   //TODO:

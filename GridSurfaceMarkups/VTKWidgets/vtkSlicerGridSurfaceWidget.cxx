@@ -83,7 +83,7 @@ void vtkSlicerGridSurfaceWidget::CreateDefaultRepresentation(vtkMRMLMarkupsDispl
 //------------------------------------------------------------------------------
 vtkSlicerMarkupsWidget* vtkSlicerGridSurfaceWidget::CreateInstance() const
 {
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkSlcierBezierSurfaceWidget");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkSlicerGridSurfaceWidget");
   if(ret)
   {
     return static_cast<vtkSlicerGridSurfaceWidget*>(ret);

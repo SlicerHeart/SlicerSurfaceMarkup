@@ -93,7 +93,7 @@ protected slots:
   /// Internal function to update type of Grid Surface
   void onGridSurfaceTypeParameterChanged();
   /// Handle apply grid surface button click
-  void applyGridResolutionButton();
+  void onApplyGridResolution();
 
 protected:
   qSlicerMarkupsGridSurfaceWidget(qSlicerMarkupsGridSurfaceWidgetPrivate &d, QWidget* parent=nullptr);
