@@ -40,8 +40,8 @@
 #include "qSlicerMarkupsAdditionalOptionsWidget_p.h"
 
 // qMRML includes
-#include "qSlicerMarkupsGridSurfaceWidget.h"
-#include "ui_qSlicerMarkupsGridSurfaceWidget.h"
+#include "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
+#include "ui_qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
 
 // MRML includes
 #include <vtkMRMLDisplayNode.h>
@@ -50,25 +50,25 @@
 #include <vtkMRMLMarkupsGridSurfaceNode.h>
 
 // --------------------------------------------------------------------------
-class qSlicerMarkupsGridSurfaceWidgetPrivate:
+class qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate:
   public qSlicerMarkupsAdditionalOptionsWidgetPrivate,
-  public Ui_qSlicerMarkupsGridSurfaceWidget
+  public Ui_qSlicerMarkupsAdditionalGridSurfaceOptionsWidget
 {
-  Q_DECLARE_PUBLIC(qSlicerMarkupsGridSurfaceWidget);
+  Q_DECLARE_PUBLIC(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 
 protected:
-  qSlicerMarkupsGridSurfaceWidget* const q_ptr;
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget* const q_ptr;
 
 public:
-  qSlicerMarkupsGridSurfaceWidgetPrivate(qSlicerMarkupsGridSurfaceWidget* object);
-  void setupUi(qSlicerMarkupsGridSurfaceWidget* widget);
+  qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget* object);
+  void setupUi(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget* widget);
 
 public:
   bool IsProcessingOnMRMLNodeModified;
 };
 
 // --------------------------------------------------------------------------
-qSlicerMarkupsGridSurfaceWidgetPrivate::qSlicerMarkupsGridSurfaceWidgetPrivate(qSlicerMarkupsGridSurfaceWidget* object)
+qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate::qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget* object)
   : q_ptr(object)
 {
   this->MarkupsNode = nullptr;
@@ -76,11 +76,11 @@ qSlicerMarkupsGridSurfaceWidgetPrivate::qSlicerMarkupsGridSurfaceWidgetPrivate(q
 }
 
 // --------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidgetPrivate::setupUi(qSlicerMarkupsGridSurfaceWidget* widget)
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate::setupUi(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget* widget)
 {
-  Q_Q(qSlicerMarkupsGridSurfaceWidget);
+  Q_Q(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 
-  this->Ui_qSlicerMarkupsGridSurfaceWidget::setupUi(widget);
+  this->Ui_qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::setupUi(widget);
 
   this->gridSurfaceSettingsCollapsibleButton->setVisible(false);
   this->surfaceTypeComboBox->clear();
@@ -97,45 +97,45 @@ void qSlicerMarkupsGridSurfaceWidgetPrivate::setupUi(qSlicerMarkupsGridSurfaceWi
 }
 
 // --------------------------------------------------------------------------
-// qSlicerMarkupsGridSurfaceWidget methods
+// qSlicerMarkupsAdditionalGridSurfaceOptionsWidget methods
 
 // --------------------------------------------------------------------------
-qSlicerMarkupsGridSurfaceWidget::
-qSlicerMarkupsGridSurfaceWidget(QWidget* parent)
-  : Superclass(*new qSlicerMarkupsGridSurfaceWidgetPrivate(this), parent)
+qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::
+qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(QWidget* parent)
+  : Superclass(*new qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate(this), parent)
 {
   this->setup();
 }
 
 // --------------------------------------------------------------------------
-qSlicerMarkupsGridSurfaceWidget::
-qSlicerMarkupsGridSurfaceWidget(qSlicerMarkupsGridSurfaceWidgetPrivate &d, QWidget* parent)
+qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::
+qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate &d, QWidget* parent)
   : Superclass(d, parent)
 {
   this->setup();
 }
 
 // --------------------------------------------------------------------------
-qSlicerMarkupsGridSurfaceWidget::~qSlicerMarkupsGridSurfaceWidget() = default;
+qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::~qSlicerMarkupsAdditionalGridSurfaceOptionsWidget() = default;
 
 // --------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::setup()
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::setup()
 {
-  Q_D(qSlicerMarkupsGridSurfaceWidget);
+  Q_D(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
   d->setupUi(this);
 }
 
 // --------------------------------------------------------------------------
-vtkMRMLMarkupsGridSurfaceNode* qSlicerMarkupsGridSurfaceWidget::mrmlGridSurfaceNode()const
+vtkMRMLMarkupsGridSurfaceNode* qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::mrmlGridSurfaceNode()const
 {
-  Q_D(const qSlicerMarkupsGridSurfaceWidget);
+  Q_D(const qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
   return vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(d->MarkupsNode);
 }
 
 // --------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::setMRMLMarkupsNode(vtkMRMLMarkupsNode* markupsNode)
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::setMRMLMarkupsNode(vtkMRMLMarkupsNode* markupsNode)
 {
-  Q_D(qSlicerMarkupsGridSurfaceWidget);
+  Q_D(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 
   Superclass::setMRMLMarkupsNode(markupsNode);
 
@@ -147,15 +147,15 @@ void qSlicerMarkupsGridSurfaceWidget::setMRMLMarkupsNode(vtkMRMLMarkupsNode* mar
 }
 
 // --------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::setMRMLMarkupsNode(vtkMRMLNode* node)
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::setMRMLMarkupsNode(vtkMRMLNode* node)
 {
   this->setMRMLMarkupsNode(vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(node));
 }
 
 // --------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::onMRMLNodeModified()
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::onMRMLNodeModified()
 {
-  Q_D(qSlicerMarkupsGridSurfaceWidget);
+  Q_D(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(d->MarkupsNode);
   if (!gridSurfaceNode)
@@ -175,9 +175,9 @@ void qSlicerMarkupsGridSurfaceWidget::onMRMLNodeModified()
 }
 
 //-----------------------------------------------------------------------------
-bool qSlicerMarkupsGridSurfaceWidget::canManageMRMLMarkupsNode(vtkMRMLMarkupsNode* markupsNode) const
+bool qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::canManageMRMLMarkupsNode(vtkMRMLMarkupsNode* markupsNode) const
 {
-  Q_D(const qSlicerMarkupsGridSurfaceWidget);
+  Q_D(const qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(markupsNode);
   if (!gridSurfaceNode)
@@ -189,9 +189,9 @@ bool qSlicerMarkupsGridSurfaceWidget::canManageMRMLMarkupsNode(vtkMRMLMarkupsNod
 }
 
 // --------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::updateWidgetFromMRML()
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::updateWidgetFromMRML()
 {
-  Q_D(qSlicerMarkupsGridSurfaceWidget);
+  Q_D(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
 
   if (!this->canManageMRMLMarkupsNode(d->MarkupsNode))
   {
@@ -211,9 +211,9 @@ void qSlicerMarkupsGridSurfaceWidget::updateWidgetFromMRML()
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::onGridSurfaceTypeParameterChanged()
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::onGridSurfaceTypeParameterChanged()
 {
-  Q_D(qSlicerMarkupsGridSurfaceWidget);
+  Q_D(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(d->MarkupsNode);
   if (!gridSurfaceNode)
   {
@@ -224,9 +224,9 @@ void qSlicerMarkupsGridSurfaceWidget::onGridSurfaceTypeParameterChanged()
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerMarkupsGridSurfaceWidget::onApplyGridResolution()
+void qSlicerMarkupsAdditionalGridSurfaceOptionsWidget::onApplyGridResolution()
 {
-  Q_D(qSlicerMarkupsGridSurfaceWidget);
+  Q_D(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(d->MarkupsNode);
   if (!gridSurfaceNode)
   {

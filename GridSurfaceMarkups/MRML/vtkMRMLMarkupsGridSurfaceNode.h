@@ -118,6 +118,13 @@ protected:
 
   int GridResolution[2] { 4, 4 };
 
+  /// In order to be able to resample to a new grid resolution after a change.
+  int PreviousGridResolution[2] { 0, 0 };
+
+protected:
+  void FillControlPointGridFromCorners(double position_0[3], double position_1[3], double position_2[3], vtkPoints* controlPoints);
+  void ResampleToNewGridResolution();
+
 protected:
   vtkMRMLMarkupsGridSurfaceNode();
   ~vtkMRMLMarkupsGridSurfaceNode() override = default;
@@ -128,6 +135,9 @@ private:
 private:
   vtkMRMLMarkupsGridSurfaceNode(const vtkMRMLMarkupsGridSurfaceNode&);
   void operator=(const vtkMRMLMarkupsGridSurfaceNode&);
+
+  friend class vtkSlicerGridSurfaceRepresentation2D;
+  friend class vtkSlicerGridSurfaceRepresentation3D;
 };
 
 #endif //__vtkMRMLMarkupsGridSurfaceNode_h_

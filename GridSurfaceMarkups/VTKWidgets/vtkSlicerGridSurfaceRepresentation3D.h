@@ -102,6 +102,7 @@ protected:
 
   void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
   void UpdateBezierSurface(vtkMRMLMarkupsGridSurfaceNode*);
+  void InitializeBezierSurfaceControlPoints(int resX, int resY);
 
 private:
   vtkSlicerGridSurfaceRepresentation3D(const vtkSlicerGridSurfaceRepresentation3D&) = delete;

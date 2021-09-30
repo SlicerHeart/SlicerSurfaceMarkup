@@ -86,7 +86,7 @@ vtkBezierSurfaceSource::vtkBezierSurfaceSource()
 
   //Note: default is bi-cubic Bezier surface (cp=4x4)
   this->SetNumberOfControlPoints(4, 4);
-  this->SetResolution(10, 10);
+  this->SetResolution(12, 12);
 }
 
 //-------------------------------------------------------------------------------

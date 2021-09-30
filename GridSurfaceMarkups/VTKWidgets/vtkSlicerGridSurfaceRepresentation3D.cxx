@@ -70,17 +70,10 @@ vtkSlicerGridSurfaceRepresentation3D::vtkSlicerGridSurfaceRepresentation3D()
 {
   this->BezierSurfaceSource = vtkSmartPointer<vtkBezierSurfaceSource>::New();
 
-  // Set the initial position of the Bezier surface
-  auto planeSource = vtkSmartPointer<vtkPlaneSource>::New();
-  planeSource->SetResolution(3, 3); //TODO:!!!
-  planeSource->Update();
-
   this->BezierSurfaceNormals = vtkSmartPointer<vtkPolyDataNormals>::New();
   this->BezierSurfaceNormals->SetInputConnection(this->BezierSurfaceSource->GetOutputPort());
 
-  this->BezierSurfaceControlPoints = vtkSmartPointer<vtkPoints>::New();
-  this->BezierSurfaceControlPoints->SetNumberOfPoints(16); //TODO:
-  this->BezierSurfaceControlPoints->DeepCopy(planeSource->GetOutput()->GetPoints());
+  this->InitializeBezierSurfaceControlPoints(4, 4);
 
   this->BezierSurfaceMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   this->BezierSurfaceMapper->SetInputConnection(this->BezierSurfaceNormals->GetOutputPort());
@@ -301,15 +294,18 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateBezierSurface(vtkMRMLMarkupsGri
     return;
   }
 
+  // Change internal grid if grid resolution has changed
   int gridResolution[2] = {0};
   node->GetGridResolution(gridResolution);
   if ( gridResolution[0] != this->BezierSurfaceSource->GetNumberOfControlPointsX()
     || gridResolution[1] != this->BezierSurfaceSource->GetNumberOfControlPointsY() )
   {
+    this->InitializeBezierSurfaceControlPoints(gridResolution[0], gridResolution[1]);
     this->BezierSurfaceSource->SetNumberOfControlPoints(gridResolution[0], gridResolution[1]);
-    //node-> //TODO:!!!
+    this->BezierSurfaceSource->SetResolution(gridResolution[0] * 3, gridResolution[1] * 3);
+
+    node->ResampleToNewGridResolution();
   }
-    
 
   if (node->GetNumberOfControlPoints() == gridResolution[0] * gridResolution[1])
   {
@@ -336,9 +332,9 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGr
   {
     // Generate topology;
     vtkSmartPointer<vtkCellArray> planeCells = vtkSmartPointer<vtkCellArray>::New();
-    for (int i=0; i<3; ++i) //TODO:?
+    for (int i=0; i<gridResolution[1]-1; ++i) //TODO:!!!
     {
-      for (int j=0; j<3; ++j)
+      for (int j=0; j<gridResolution[0]-1; ++j)
       {
         vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
         polyLine->GetPointIds()->SetNumberOfIds(5);
@@ -354,4 +350,20 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGr
     this->ControlPolygonPolyData->SetPoints(this->BezierSurfaceControlPoints);
     this->ControlPolygonPolyData->SetLines(planeCells);
   }
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerGridSurfaceRepresentation3D::InitializeBezierSurfaceControlPoints(int resX, int resY)
+{
+  // Set the initial position of the Bezier surface
+  auto planeSource = vtkSmartPointer<vtkPlaneSource>::New();
+  planeSource->SetResolution(resX - 1, resY - 1);
+  planeSource->Update();
+
+  if (!this->BezierSurfaceControlPoints.GetPointer())
+  {
+    this->BezierSurfaceControlPoints = vtkSmartPointer<vtkPoints>::New();
+  }
+  this->BezierSurfaceControlPoints->SetNumberOfPoints(resX * resY);
+  this->BezierSurfaceControlPoints->DeepCopy(planeSource->GetOutput()->GetPoints());
 }
