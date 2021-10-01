@@ -319,7 +319,19 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateBezierSurface(vtkMRMLMarkupsGri
         static_cast<float>(point[2]));
     }
 
-    this->BezierSurfaceSource->SetControlPoints(this->BezierSurfaceControlPoints);
+    // Transpose control points for Bezier source
+    vtkNew<vtkPoints> bezierPoints;
+    bezierPoints->SetNumberOfPoints(gridResolution[0]*gridResolution[1]);
+    for (int i=0; i<gridResolution[0]; ++i)
+    {
+      for (int j=0; j<gridResolution[1]; ++j)
+      {
+        bezierPoints->SetPoint(i*gridResolution[1] + j, this->BezierSurfaceControlPoints->GetPoint(j*gridResolution[0] + i));
+      }
+    }
+
+    //this->BezierSurfaceSource->SetControlPoints(this->BezierSurfaceControlPoints);
+    this->BezierSurfaceSource->SetControlPoints(bezierPoints);
   }
 }
 
