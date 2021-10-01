@@ -241,14 +241,14 @@ void vtkMRMLMarkupsGridSurfaceNode::FillControlPointGridFromCorners(double posit
   // Calculate fourth point of plane rectangle from first three control points (numbers according to order of placement):
   //   Get vector between second and third point and add it to first point.
   //
-  //     0-------------------------3
+  //             vector_a *
+  //          GridResolution[0]
+  //     0------------------------>1
   //     |                         |
-  //     |vector_a *               |
-  //     |GridResolution[0]        |
-  //     v                         |
-  //     1------------------------>2
-  //             vector_b *
-  //          GridResolution[1]
+  //     |vector_b *               |
+  //     |GridResolution[1]        |
+  //     |                         v
+  //     3-------------------------2
   //
   double vector_1_2[3] = {0.0};
   vtkMath::Subtract(position_2, position_1, vector_1_2);
@@ -260,26 +260,26 @@ void vtkMRMLMarkupsGridSurfaceNode::FillControlPointGridFromCorners(double posit
   //
 
   // Vectors in both directions for displacement between adjacent control points
-  double vector_b[3] = {0.0}; // = vector_0_1 / GridResolution[0]
-  vtkMath::Subtract(position_1, position_0, vector_b);
-  vtkMath::MultiplyScalar(vector_b, 1.0 / (double)(this->GridResolution[1] - 1));
-  double vector_a[3] = { vector_1_2[0], vector_1_2[1], vector_1_2[2] }; // = vector_1_2 / GridResolution[0]
+  double vector_a[3] = {0.0}; // = vector_0_1 / GridResolution[0]
+  vtkMath::Subtract(position_1, position_0, vector_a);
   vtkMath::MultiplyScalar(vector_a, 1.0 / (double)(this->GridResolution[0] - 1));
+  double vector_b[3] = { vector_1_2[0], vector_1_2[1], vector_1_2[2] }; // = vector_1_2 / GridResolution[1]
+  vtkMath::MultiplyScalar(vector_b, 1.0 / (double)(this->GridResolution[1] - 1));
 
   // Fill in control point list
-  for (int a = 0; a < this->GridResolution[0]; ++a)
+  for (int b = 0; b < this->GridResolution[1]; ++b)
   {
-    double vector_a_scaled[3] = {vector_a[0], vector_a[1], vector_a[2]};
-    vtkMath::MultiplyScalar(vector_a_scaled, a);
+    double vector_b_scaled[3] = {vector_b[0], vector_b[1], vector_b[2]};
+    vtkMath::MultiplyScalar(vector_b_scaled, b);
 
-    for (int b = 0; b < this->GridResolution[1]; ++b)
+    for (int a = 0; a < this->GridResolution[0]; ++a)
     {
-      double vector_b_scaled[3] = {vector_b[0], vector_b[1], vector_b[2]};
-      vtkMath::MultiplyScalar(vector_b_scaled, b);
+      double vector_a_scaled[3] = {vector_a[0], vector_a[1], vector_a[2]};
+      vtkMath::MultiplyScalar(vector_a_scaled, a);
 
       double position_a_b[3] = {0.0};
-      vtkMath::Add(position_0, vector_b_scaled, position_a_b);
-      vtkMath::Add(position_a_b, vector_a_scaled, position_a_b);
+      vtkMath::Add(position_0, vector_a_scaled, position_a_b);
+      vtkMath::Add(position_a_b, vector_b_scaled, position_a_b);
 
       controlPoints->InsertNextPoint(position_a_b);
     }
@@ -304,7 +304,7 @@ void vtkMRMLMarkupsGridSurfaceNode::ResampleToNewGridResolution()
   double position_0[3] = {0.0};
   this->GetNthControlPointPositionWorld(0, position_0);
   double position_1[3] = {0.0};
-  this->GetNthControlPointPositionWorld(this->PreviousGridResolution[1]-1, position_1);
+  this->GetNthControlPointPositionWorld(this->PreviousGridResolution[0]-1, position_1);
   double position_2[3] = {0.0};
   this->GetNthControlPointPositionWorld((this->PreviousGridResolution[0]*this->PreviousGridResolution[1])-1, position_2);
 
