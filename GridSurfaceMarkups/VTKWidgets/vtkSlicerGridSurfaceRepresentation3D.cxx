@@ -332,17 +332,17 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGr
   {
     // Generate topology;
     vtkSmartPointer<vtkCellArray> planeCells = vtkSmartPointer<vtkCellArray>::New();
-    for (int i=0; i<gridResolution[1]-1; ++i) //TODO:!!!
+    for (int i=0; i<gridResolution[0]-1; ++i)
     {
-      for (int j=0; j<gridResolution[0]-1; ++j)
+      for (int j=0; j<gridResolution[1]-1; ++j)
       {
         vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
         polyLine->GetPointIds()->SetNumberOfIds(5);
-        polyLine->GetPointIds()->SetId(0, i*gridResolution[0] + j);
-        polyLine->GetPointIds()->SetId(1, i*gridResolution[0] + j+1);
-        polyLine->GetPointIds()->SetId(2, (i+1)*gridResolution[0] + j+1);
-        polyLine->GetPointIds()->SetId(3, (i+1)*gridResolution[0] + j);
-        polyLine->GetPointIds()->SetId(4, i*gridResolution[0] + j);
+        polyLine->GetPointIds()->SetId(0, i*gridResolution[1] + j);
+        polyLine->GetPointIds()->SetId(1, i*gridResolution[1] + j+1);
+        polyLine->GetPointIds()->SetId(2, (i+1)*gridResolution[1] + j+1);
+        polyLine->GetPointIds()->SetId(3, (i+1)*gridResolution[1] + j);
+        polyLine->GetPointIds()->SetId(4, i*gridResolution[1] + j);
         planeCells->InsertNextCell(polyLine);
       }
     }
