@@ -71,6 +71,27 @@ protected:
   /// TODO:
   void BuildCoeffMatrix();
 
+  /// TODO: helpers
+  void BasisFunction();
+  /// TODO: helpers
+  void FindSpanLinear();
+
+
+  /// TODO: linalg
+  void LuSolve();
+  /// TODO: linalg
+  void LuDecomposition();
+  /// TODO: linalg
+  void ForwardSubstitution();
+  /// TODO: linalg
+  void BackwardSubstitution();
+  /// TODO: _linalg
+  void DooLittle();
+  /// TODO: knotvector
+  void GenerateKnotVector();
+  /// TODO: linalg
+  //void PointDistance();
+
 protected:
   /// TODO:
   vtkSmartPointer<vtkPoints> InputPoints;

@@ -114,6 +114,7 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData)
   // for u in range(size_u):
   //     pts = [ctrlpts_r[u + (size_u * v)] for v in range(size_v)]
   //     matrix_a = _build_coeff_matrix(degree_v, kv_v, vl, pts)
+// linalg.lu_solve
   //     ctrlpts += linalg.lu_solve(matrix_a, pts)
   //
   // # Generate B-spline surface
@@ -216,6 +217,7 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve() // (points, centripetal=Fa
   // cds = [0.0 for _ in range(num_points + 1)]
   // cds[-1] = 1.0
   // for i in range(1, num_points):
+// linalg.point_distance
   //     distance = linalg.point_distance(points[i], points[i - 1])
   //     cds[i] = math.sqrt(distance) if centripetal else distance
   //
@@ -285,9 +287,342 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix() // (degree, knotvector, para
   // # Set up coefficient matrix
   // matrix_a = [[0.0 for _ in range(num_points)] for _ in range(num_points)]
   // for i in range(num_points):
+// helpers.find_span_linear
   //     span = helpers.find_span_linear(degree, knotvector, num_points, params[i])
+// helpers.basis_function
   //     matrix_a[i][span-degree:span+1] = helpers.basis_function(degree, knotvector, span, params[i])
   //
   // # Return coefficient matrix
   // return matrix_a
 }
+
+//
+// helpers
+//
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::BasisFunction() // (degree, knot_vector, span, knot)
+{
+  // """ Computes the non-vanishing basis functions for a single parameter.
+  //
+  // Implementation of Algorithm A2.2 from The NURBS Book by Piegl & Tiller.
+  // Uses recurrence to compute the basis functions, also known as Cox - de
+  // Boor recursion formula.
+  //
+  // :param degree: degree, :math:`p`
+  // :type degree: int
+  // :param knot_vector: knot vector, :math:`U`
+  // :type knot_vector: list, tuple
+  // :param span: knot span, :math:`i`
+  // :type span: int
+  // :param knot: knot or parameter, :math:`u`
+  // :type knot: float
+  // :return: basis functions
+  // :rtype: list
+  // """
+  // left = [0.0 for _ in range(degree + 1)]
+  // right = [0.0 for _ in range(degree + 1)]
+  // N = [1.0 for _ in range(degree + 1)]  # N[0] = 1.0 by definition
+  //
+  // for j in range(1, degree + 1):
+  //     left[j] = knot - knot_vector[span + 1 - j]
+  //     right[j] = knot_vector[span + j] - knot
+  //     saved = 0.0
+  //     for r in range(0, j):
+  //         temp = N[r] / (right[r + 1] + left[j - r])
+  //         N[r] = saved + right[r + 1] * temp
+  //         saved = left[j - r] * temp
+  //     N[j] = saved
+  //
+  // return N
+
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::FindSpanLinear() // (degree, knot_vector, num_ctrlpts, knot, **kwargs)
+{
+  // """ Finds the span of a single knot over the knot vector using linear search.
+  //
+  // Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
+  //
+  // :param degree: degree, :math:`p`
+  // :type degree: int
+  // :param knot_vector: knot vector, :math:`U`
+  // :type knot_vector: list, tuple
+  // :param num_ctrlpts: number of control points, :math:`n + 1`
+  // :type num_ctrlpts: int
+  // :param knot: knot or parameter, :math:`u`
+  // :type knot: float
+  // :return: knot span
+  // :rtype: int
+  // """
+  // span = degree + 1  # Knot span index starts from zero
+  // while span < num_ctrlpts and knot_vector[span] <= knot:
+  //     span += 1
+  //
+  // return span - 1
+
+}
+
+//
+// linalg
+//
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::LuSolve() // (matrix_a, b)
+{
+  // """ Computes the solution to a system of linear equations.
+  //
+  // This function solves :math:`Ax = b` using LU decomposition. :math:`A` is a
+  // :math:`N \\times N` matrix, :math:`b` is :math:`N \\times M` matrix of
+  // :math:`M` column vectors. Each column of :math:`x` is a solution for
+  // corresponding column of :math:`b`.
+  //
+  // :param matrix_a: matrix A
+  // :type m_l: list
+  // :param b: matrix of M column vectors
+  // :type b: list
+  // :return: x, the solution matrix
+  // :rtype: list
+  // """
+  // # Variable initialization
+  // dim = len(b[0])
+  // num_x = len(b)
+  // x = [[0.0 for _ in range(dim)] for _ in range(num_x)]
+  //
+  // # LU decomposition
+  // m_l, m_u = lu_decomposition(matrix_a)
+  //
+  // # Solve the system of linear equations
+  // for i in range(dim):
+  //     bt = [b1[i] for b1 in b]
+  //     y = forward_substitution(m_l, bt)
+  //     xt = backward_substitution(m_u, y)
+  //     for j in range(num_x):
+  //         x[j][i] = xt[j]
+  //
+  // # Return the solution
+  // return x
+
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::LuDecomposition() // (matrix_a)
+{
+  // """ LU-Factorization method using Doolittle's Method for solution of linear systems.
+  //
+  // Decomposes the matrix :math:`A` such that :math:`A = LU`.
+  //
+  // The input matrix is represented by a list or a tuple. The input matrix is **2-dimensional**, i.e. list of lists of
+  // integers and/or floats.
+  //
+  // :param matrix_a: Input matrix (must be a square matrix)
+  // :type matrix_a: list, tuple
+  // :return: a tuple containing matrices L and U
+  // :rtype: tuple
+  // """
+  // # Check if the 2-dimensional input matrix is a square matrix
+  // q = len(matrix_a)
+  // for idx, m_a in enumerate(matrix_a):
+  //     if len(m_a) != q:
+  //         raise ValueError("The input must be a square matrix. " +
+  //                          "Row " + str(idx + 1) + " has a size of " + str(len(m_a)) + ".")
+  //
+  // # Return L and U matrices
+  // return _linalg.doolittle(matrix_a)
+
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::ForwardSubstitution()
+{
+  // """ Forward substitution method for the solution of linear systems.
+  //
+  // Solves the equation :math:`Ly = b` using forward substitution method
+  // where :math:`L` is a lower triangular matrix and :math:`b` is a column matrix.
+  //
+  // :param matrix_l: L, lower triangular matrix
+  // :type matrix_l: list, tuple
+  // :param matrix_b: b, column matrix
+  // :type matrix_b: list, tuple
+  // :return: y, column matrix
+  // :rtype: list
+  // """
+  // q = len(matrix_b)
+  // matrix_y = [0.0 for _ in range(q)]
+  // matrix_y[0] = float(matrix_b[0]) / float(matrix_l[0][0])
+  // for i in range(1, q):
+  //     matrix_y[i] = float(matrix_b[i]) - sum([matrix_l[i][j] * matrix_y[j] for j in range(0, i)])
+  //     matrix_y[i] /= float(matrix_l[i][i])
+  // return matrix_y
+
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::BackwardSubstitution()
+{
+  // """ Backward substitution method for the solution of linear systems.
+  //
+  // Solves the equation :math:`Ux = y` using backward substitution method
+  // where :math:`U` is a upper triangular matrix and :math:`y` is a column matrix.
+  //
+  // :param matrix_u: U, upper triangular matrix
+  // :type matrix_u: list, tuple
+  // :param matrix_y: y, column matrix
+  // :type matrix_y: list, tuple
+  // :return: x, column matrix
+  // :rtype: list
+  // """
+  // q = len(matrix_y)
+  // matrix_x = [0.0 for _ in range(q)]
+  // matrix_x[q - 1] = float(matrix_y[q - 1]) / float(matrix_u[q - 1][q - 1])
+  // for i in range(q - 2, -1, -1):
+  //     matrix_x[i] = float(matrix_y[i]) - sum([matrix_u[i][j] * matrix_x[j] for j in range(i, q)])
+  //     matrix_x[i] /= float(matrix_u[i][i])
+  // return matrix_x
+
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::LinSpace()
+{
+  // """ Returns a list of evenly spaced numbers over a specified interval.
+  //
+  // Inspired from Numpy's linspace function: https://github.com/numpy/numpy/blob/master/numpy/core/function_base.py
+  //
+  // :param start: starting value
+  // :type start: float
+  // :param stop: end value
+  // :type stop: float
+  // :param num: number of samples to generate
+  // :type num: int
+  // :param decimals: number of significands
+  // :type decimals: int
+  // :return: a list of equally spaced numbers
+  // :rtype: list
+  // """
+  // start = float(start)
+  // stop = float(stop)
+  // if abs(start - stop) <= 10e-8:
+  //     return [start]
+  // num = int(num)
+  // if num > 1:
+  //     div = num - 1
+  //     delta = stop - start
+  //     return [float(("{:." + str(decimals) + "f}").format((start + (float(x) * float(delta) / float(div)))))
+  //             for x in range(num)]
+  // return [float(("{:." + str(decimals) + "f}").format(start))]
+
+
+}
+
+void vtkSlicerNurbsFittingLogic::DooLittle() // (matrix_a):
+{
+  // """ Doolittle's Method for LU-factorization.
+  //
+  // :param matrix_a: Input matrix (must be a square matrix)
+  // :type matrix_a: list, tuple
+  // :return: a tuple containing matrices (L,U)
+  // :rtype: tuple
+  // """
+  // # Initialize L and U matrices
+  // matrix_u = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
+  // matrix_l = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
+  //
+  // # Doolittle Method
+  // for i in range(0, len(matrix_a)):
+  //     for k in range(i, len(matrix_a)):
+  //         # Upper triangular (U) matrix
+  //         matrix_u[i][k] = float(matrix_a[i][k] - sum([matrix_l[i][j] * matrix_u[j][k] for j in range(0, i)]))
+  //         # Lower triangular (L) matrix
+  //         if i == k:
+  //             matrix_l[i][i] = 1.0
+  //         else:
+  //             matrix_l[k][i] = float(matrix_a[k][i] - sum([matrix_l[k][j] * matrix_u[j][i] for j in range(0, i)]))
+  //             # Handle zero division error
+  //             try:
+  //                 matrix_l[k][i] /= float(matrix_u[i][i])
+  //             except ZeroDivisionError:
+  //                 matrix_l[k][i] = 0.0
+  //
+  // return matrix_l, matrix_u
+
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::GenerateKnotVector() // knotvector(degree, num_ctrlpts, **kwargs)
+{
+  // """ Generates an equally spaced knot vector.
+  //
+  // It uses the following equality to generate knot vector: :math:`m = n + p + 1`
+  //
+  // where;
+  //
+  // * :math:`p`, degree
+  // * :math:`n + 1`, number of control points
+  // * :math:`m + 1`, number of knots
+  //
+  // Keyword Arguments:
+  //
+  //     * ``clamped``: Flag to choose from clamped or unclamped knot vector options. *Default: True*
+  //
+  // :param degree: degree
+  // :type degree: int
+  // :param num_ctrlpts: number of control points
+  // :type num_ctrlpts: int
+  // :return: knot vector
+  // :rtype: list
+  // """
+  // if degree == 0 or num_ctrlpts == 0:
+  //     raise ValueError("Input values should be different than zero.")
+  //
+  // # Get keyword arguments
+  // clamped = kwargs.get('clamped', True)
+  //
+  // # Number of repetitions at the start and end of the array
+  // num_repeat = degree
+  //
+  // # Number of knots in the middle
+  // num_segments = num_ctrlpts - (degree + 1)
+  //
+  // if not clamped:
+  //     # No repetitions at the start and end
+  //     num_repeat = 0
+  //     # Should conform the rule: m = n + p + 1
+  //     num_segments = degree + num_ctrlpts - 1
+  //
+  // # First knots
+  // knot_vector = [0.0 for _ in range(0, num_repeat)]
+  //
+  // # Middle knots
+  // knot_vector += linspace(0.0, 1.0, num_segments + 2)
+  //
+  // # Last knots
+  // knot_vector += [1.0 for _ in range(0, num_repeat)]
+  //
+  // # Return auto-generated knot vector
+  // return knot_vector
+
+}
+
+//---------------------------------------------------------------------------
+//void vtkSlicerNurbsFittingLogic::PointDistance() // (pt1, pt2)
+//{
+  // """ Computes distance between two points.
+  //
+  // :param pt1: point 1
+  // :type pt1: list, tuple
+  // :param pt2: point 2
+  // :type pt2: list, tuple
+  // :return: distance between input points
+  // :rtype: float
+  // """
+  // if len(pt1) != len(pt2):
+  //     raise ValueError("The input points should have the same dimension")
+  //
+  // dist_vector = vector_generate(pt1, pt2, normalize=False)
+  // distance = vector_magnitude(dist_vector)
+  // return distance
+
+//}
+
