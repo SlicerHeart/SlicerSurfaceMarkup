@@ -35,6 +35,7 @@
   Ebatinca).
 
 ==============================================================================*/
+
 #include "vtkSlicerGridSurfaceMarkupsLogic.h"
 
 // GridSurface Markups MRML includes
