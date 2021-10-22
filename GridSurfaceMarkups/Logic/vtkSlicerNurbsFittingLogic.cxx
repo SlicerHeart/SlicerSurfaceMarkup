@@ -50,9 +50,12 @@
 
 // VTK includes
 #include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkExecutive.h>
+#include <vtkIdList.h>
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
+#include <vtkMath.h>
 #include <vtkObjectFactory.h>
 
 //----------------------------------------------------------------------------
@@ -73,6 +76,18 @@ void vtkSlicerNurbsFittingLogic::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os, indent);
 }
 
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::SetInputPoints(vtkPoints* points)
+{
+  if (this->InputPoints == points)
+  {
+    return;
+  }
+
+  this->InputPoints = points;
+  this->Modified();
+}
+
 //-------------------------------------------------------------------------------
 int vtkSlicerNurbsFittingLogic::RequestData(
   vtkInformation* vtkNotUsed(request), vtkInformationVector** vtkNotUsed(inputVector), vtkInformationVector* outputVector)
@@ -90,7 +105,7 @@ int vtkSlicerNurbsFittingLogic::RequestData(
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData)
+void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (points, size_u, size_v, degree_u, degree_v, **kwargs)
 {
   // # Keyword arguments
   // use_centripetal = kwargs.get('centripetal', False)
@@ -114,7 +129,7 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData)
   // for u in range(size_u):
   //     pts = [ctrlpts_r[u + (size_u * v)] for v in range(size_v)]
   //     matrix_a = _build_coeff_matrix(degree_v, kv_v, vl, pts)
-// linalg.lu_solve
+  // #CP_Note: linalg.lu_solve
   //     ctrlpts += linalg.lu_solve(matrix_a, pts)
   //
   // # Generate B-spline surface
@@ -134,12 +149,33 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData)
     return;
   }
 
+  if (!this->InputPoints)
+  {
+    vtkErrorMacro("UpdateNurbsPolyData: No valid input point list is set");
+    return;
+  }
+  if (this->InputResolution[0] < 2 || this->InputResolution[1] < 2)
+  {
+    vtkErrorMacro("UpdateNurbsPolyData: No valid input resolution is set");
+    return;
+  }
+
+  vtkNew<vtkDoubleArray> ukParams;
+  vtkNew<vtkDoubleArray> vlParams;
+  this->ComputeParamsSurface(ukParams, vlParams);
+
+
+
+
+
+
+
   vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
 
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ComputeParamsSurface() // (points, size_u, size_v, degree_u, degree_v, **kwargs)
+void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams) // (points, size_u, size_v, centripetal=False)
 {
   // """ Computes :math:`\\overline{u}_{k}` and :math:`\\overline{u}_{l}` for surfaces.
   //
@@ -167,7 +203,9 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface() // (points, size_u, size
   // # Compute for each curve on the v-direction
   // uk_temp = []
   // for v in range(size_v):
+  // #CP_Note: Get v'th column
   //     pts_u = [points[v + (size_v * u)] for u in range(size_u)]
+  // #CP_Note: Append parameter list to one long list
   //     uk_temp += compute_params_curve(pts_u, centripetal)
   //
   // # Do averaging on the u-direction
@@ -180,6 +218,7 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface() // (points, size_u, size
   //
   // # Compute for each curve on the u-direction
   // vl_temp = []
+  // #CP_Note: Get u'th row
   // for u in range(size_u):
   //     pts_v = [points[v + (size_v * u)] for v in range(size_v)]
   //     vl_temp += compute_params_curve(pts_v, centripetal)
@@ -190,10 +229,67 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface() // (points, size_u, size
   //     vl[v] = sum(knots_u) / size_u
   //
   // return uk, vl
+
+  // PORTING DONE //
+
+  // Compute parameters for each curve on the v direction. Concatenate into one parameter array
+  vtkNew<vtkDoubleArray> ukParamsTemp;
+  for (int v=0; v<this->InputResolution[1]; ++v)
+  {
+    // Collect column point indices
+    vtkNew<vtkIdList> columnIds;
+    for (int u=0; u<this->InputResolution[0]; ++u)
+    {
+      columnIds->InsertNextId(this->GetPointIndexUV(u,v));
+    }
+
+    // Compute parameters for column
+    this->ComputeParamsCurve(columnIds, ukParamsTemp);
+  }
+
+  // Do averaging on the u direction
+  ukParams->Initialize();
+  for (int u=0; u<this->InputResolution[0]; ++u)
+  {
+    double sumKnots_v = 0.0;
+    for (int v=0; v<this->InputResolution[1]; ++v)
+    {
+      sumKnots_v += ukParamsTemp->GetValue(u + (this->InputResolution[0] * v));
+    }
+    ukParams->InsertNextValue(sumKnots_v / this->InputResolution[1]);
+  }
+
+
+  // Compute parameters for each curve on the u direction. Concatenate into one parameter array
+  vtkNew<vtkDoubleArray> vlParamsTemp;
+  for (int u=0; u<this->InputResolution[0]; ++u)
+  {
+    // Collect row point indices
+    vtkNew<vtkIdList> rowIds;
+    for (int v=0; v<this->InputResolution[1]; ++v)
+    {
+      rowIds->InsertNextId(this->GetPointIndexUV(u,v));
+    }
+
+    // Compute parameters for row
+    this->ComputeParamsCurve(rowIds, vlParamsTemp);
+  }
+
+  // Do averaging on the v direction
+  vlParams->Initialize();
+  for (int v=0; v<this->InputResolution[1]; ++v)
+  {
+    double sumKnots_u = 0.0;
+    for (int u=0; u<this->InputResolution[0]; ++u)
+    {
+      sumKnots_u += vlParamsTemp->GetValue(v + (this->InputResolution[1] * u));
+    }
+    vlParams->InsertNextValue(sumKnots_u / this->InputResolution[0]);
+  }
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ComputeParamsCurve() // (points, centripetal=False)
+void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(vtkIdList* indexList, vtkDoubleArray* parametersArray) // (points, centripetal=False)
 {
   // """ Computes :math:`\\overline{u}_{k}` for curves.
   //
@@ -217,7 +313,7 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve() // (points, centripetal=Fa
   // cds = [0.0 for _ in range(num_points + 1)]
   // cds[-1] = 1.0
   // for i in range(1, num_points):
-// linalg.point_distance
+  // #CP_Note: linalg.point_distance
   //     distance = linalg.point_distance(points[i], points[i - 1])
   //     cds[i] = math.sqrt(distance) if centripetal else distance
   //
@@ -230,10 +326,48 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve() // (points, centripetal=Fa
   //     uk[i] = sum(cds[0:i + 1]) / d
   //
   // return uk
+  
+  // PORTING DONE //
+
+  if (!indexList || !parametersArray)
+  {
+    vtkErrorMacro("ComputeParamsCurve: Invalid input arguments");
+    return;
+  }
+
+  // Calculate chord lengths between the curve points
+  vtkNew<vtkDoubleArray> chordLengthsArray;
+  double prevPoint[3] = {0.0};
+  double currentPoint[3] = {0.0};
+  double distance = 0.0;
+  double sumAllChordLengths = 0.0;
+  for (int i=1; i<indexList->GetNumberOfIds(); ++i)
+  {
+    this->InputPoints->GetPoint(indexList->GetId(i-1), prevPoint);
+    this->InputPoints->GetPoint(indexList->GetId(i), currentPoint);
+    double distance = sqrt(vtkMath::Distance2BetweenPoints(currentPoint, prevPoint));
+    double chordLength = this->UseCentripetal ? sqrt(distance) : distance;
+    chordLengthsArray->InsertNextValue(chordLength);
+    sumAllChordLengths += chordLength;
+  }
+
+  // Insert first parameter (always with value 0) to the array
+  parametersArray->InsertNextValue(0.0);
+
+  // Divide individual chord lengths by the total chord length and insert parameter into output array
+  double currentSumChordLengths = 0.0;
+  for (int i=0; i<chordLengthsArray->GetNumberOfValues()-1; ++i)
+  {
+    currentSumChordLengths += chordLengthsArray->GetValue(i);
+    parametersArray->InsertNextValue(currentSumChordLengths / sumAllChordLengths);
+  }
+
+  // Insert last parameter (always with value 1) to the array
+  parametersArray->InsertNextValue(1.0);
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ComputeKnotVector() // (degree, num_points, params)
+void vtkSlicerNurbsFittingLogic::ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* params) // (degree, num_points, params)
 {
   // """ Computes a knot vector from the parameter list using averaging method.
   //
@@ -260,6 +394,31 @@ void vtkSlicerNurbsFittingLogic::ComputeKnotVector() // (degree, num_points, par
   // kv += [1.0 for _ in range(degree + 1)]
   //
   // return kv
+
+  if (degree == 0 || numberOfControlPoints == 0)
+  {
+    vtkErrorMacro("GenerateKnotVector: Input values should be different than zero");
+    return;
+  }
+  if (!params)
+  {
+    vtkErrorMacro("GenerateKnotVector: Invalid parameters array");
+    return;
+  }
+
+  vtkNew<vtkDoubleArray> knotVector;
+
+  // Start knot vector
+  for (int i=0; i<degree+1; ++i)
+  {
+    knotVector->InsertNextValue(0.0);
+  }
+
+  // Use averaging method (Eqn 9.8) to compute internal knots in the knot vector
+  for (int i=0; i<numberOfControlPoints-degree-1; ++i)
+  {
+    //TODO:
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -287,9 +446,9 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix() // (degree, knotvector, para
   // # Set up coefficient matrix
   // matrix_a = [[0.0 for _ in range(num_points)] for _ in range(num_points)]
   // for i in range(num_points):
-// helpers.find_span_linear
+  // #CP_Note: helpers.find_span_linear
   //     span = helpers.find_span_linear(degree, knotvector, num_points, params[i])
-// helpers.basis_function
+  // #CP_Note: helpers.basis_function
   //     matrix_a[i][span-degree:span+1] = helpers.basis_function(degree, knotvector, span, params[i])
   //
   // # Return coefficient matrix
@@ -483,8 +642,10 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution()
 
 }
 
+/*
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::LinSpace()
+void vtkSlicerNurbsFittingLogic::LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* inOutArray)
+// (start, stop, num, decimals=18)
 {
   // """ Returns a list of evenly spaced numbers over a specified interval.
   //
@@ -513,9 +674,28 @@ void vtkSlicerNurbsFittingLogic::LinSpace()
   //             for x in range(num)]
   // return [float(("{:." + str(decimals) + "f}").format(start))]
 
+  if (!inOutArray)
+  {
+    vtkErrorMacro("LinSpace: Invalid input-output array");
+    return;
+  }
 
+  double epsilon = 1e-8;
+  if (fabs(start - stop) <= epsilon || numOfSamples <= 1)
+  {
+    inOutArray->InsertNextValue(start);
+    return;
+  }
+
+  double div = numOfSamples - 1;
+  double delta = stop - start;
+  for (int i=0; i<numOfSamples; ++i)
+  {
+    inOutArray->InsertNextValue((double)i * delta / div);
+  }
 }
-
+*/
+//---------------------------------------------------------------------------
 void vtkSlicerNurbsFittingLogic::DooLittle() // (matrix_a):
 {
   // """ Doolittle's Method for LU-factorization.
@@ -550,60 +730,92 @@ void vtkSlicerNurbsFittingLogic::DooLittle() // (matrix_a):
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::GenerateKnotVector() // knotvector(degree, num_ctrlpts, **kwargs)
+unsigned int vtkSlicerNurbsFittingLogic::GetPointIndexUV(unsigned int u, unsigned int v)
 {
-  // """ Generates an equally spaced knot vector.
-  //
-  // It uses the following equality to generate knot vector: :math:`m = n + p + 1`
-  //
-  // where;
-  //
-  // * :math:`p`, degree
-  // * :math:`n + 1`, number of control points
-  // * :math:`m + 1`, number of knots
-  //
-  // Keyword Arguments:
-  //
-  //     * ``clamped``: Flag to choose from clamped or unclamped knot vector options. *Default: True*
-  //
-  // :param degree: degree
-  // :type degree: int
-  // :param num_ctrlpts: number of control points
-  // :type num_ctrlpts: int
-  // :return: knot vector
-  // :rtype: list
-  // """
-  // if degree == 0 or num_ctrlpts == 0:
-  //     raise ValueError("Input values should be different than zero.")
-  //
-  // # Get keyword arguments
-  // clamped = kwargs.get('clamped', True)
-  //
-  // # Number of repetitions at the start and end of the array
-  // num_repeat = degree
-  //
-  // # Number of knots in the middle
-  // num_segments = num_ctrlpts - (degree + 1)
-  //
-  // if not clamped:
-  //     # No repetitions at the start and end
-  //     num_repeat = 0
-  //     # Should conform the rule: m = n + p + 1
-  //     num_segments = degree + num_ctrlpts - 1
-  //
-  // # First knots
-  // knot_vector = [0.0 for _ in range(0, num_repeat)]
-  //
-  // # Middle knots
-  // knot_vector += linspace(0.0, 1.0, num_segments + 2)
-  //
-  // # Last knots
-  // knot_vector += [1.0 for _ in range(0, num_repeat)]
-  //
-  // # Return auto-generated knot vector
-  // return knot_vector
+  if (u >= this->InputResolution[0] || v >= this->InputResolution[1])
+  {
+    vtkErrorMacro("GetPointUV: Index pair (" << u << ", " << v << ") is out of range");
+    return -1;
+  }
 
+  return u * this->InputResolution[1] + v;
 }
+
+//---------------------------------------------------------------------------
+//void vtkSlicerNurbsFittingLogic::GenerateKnotVector(int degree, int numberOfControlPoints, bool clamped/*=true*/) // knotvector(degree, num_ctrlpts, **kwargs)
+//{
+//  // """ Generates an equally spaced knot vector.
+//  //
+//  // It uses the following equality to generate knot vector: :math:`m = n + p + 1`
+//  //
+//  // where;
+//  //
+//  // * :math:`p`, degree
+//  // * :math:`n + 1`, number of control points
+//  // * :math:`m + 1`, number of knots
+//  //
+//  // Keyword Arguments:
+//  //
+//  //     * ``clamped``: Flag to choose from clamped or unclamped knot vector options. *Default: True*
+//  //
+//  // :param degree: degree
+//  // :type degree: int
+//  // :param num_ctrlpts: number of control points
+//  // :type num_ctrlpts: int
+//  // :return: knot vector
+//  // :rtype: list
+//  // """
+//  // if degree == 0 or num_ctrlpts == 0:
+//  //     raise ValueError("Input values should be different than zero.")
+//  //
+//  // # Get keyword arguments
+//  // clamped = kwargs.get('clamped', True)
+//  //
+//  // # Number of repetitions at the start and end of the array
+//  // num_repeat = degree
+//  //
+//  // # Number of knots in the middle
+//  // num_segments = num_ctrlpts - (degree + 1)
+//  //
+//  // if not clamped:
+//  //     # No repetitions at the start and end
+//  //     num_repeat = 0
+//  //     # Should conform the rule: m = n + p + 1
+//  //     num_segments = degree + num_ctrlpts - 1
+//  //
+//  // # First knots
+//  // knot_vector = [0.0 for _ in range(0, num_repeat)]
+//  //
+//  // # Middle knots
+//  // knot_vector += linspace(0.0, 1.0, num_segments + 2)
+//  //
+//  // # Last knots
+//  // knot_vector += [1.0 for _ in range(0, num_repeat)]
+//  //
+//  // # Return auto-generated knot vector
+//  // return knot_vector
+//
+//  if (degree == 0 || numberOfControlPoints == 0)
+//  {
+//    vtkErrorMacro("GenerateKnotVector: Input values should be different than zero");
+//    return;
+//  }
+//
+//  // Number of repetitions at the start and end of the array
+//  int numberOfRepetition = degree;
+//  // Number of knots in the middle
+//  int numberOfSegments = numberOfControlPoints - (degree + 1);
+//
+//  if (!clamped)
+//  {
+//    // No repetitions at the start and end
+//    numberOfRepetition = 0;
+//    // Should conform the rule: m = n + p + 1
+//    numberOfSegments = degree + numberOfControlPoints - 1;
+//  }
+//
+//  vtkNew<vtkDoubleArray> 
+//}
 
 //---------------------------------------------------------------------------
 //void vtkSlicerNurbsFittingLogic::PointDistance() // (pt1, pt2)
@@ -623,6 +835,4 @@ void vtkSlicerNurbsFittingLogic::GenerateKnotVector() // knotvector(degree, num_
   // dist_vector = vector_generate(pt1, pt2, normalize=False)
   // distance = vector_magnitude(dist_vector)
   // return distance
-
 //}
-

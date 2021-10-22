@@ -43,6 +43,9 @@
 
 #include "vtkSlicerGridSurfaceMarkupsModuleLogicExport.h"
 
+class vtkDoubleArray;
+class vtkIdList;
+
 class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_LOGIC_EXPORT vtkSlicerNurbsFittingLogic : public vtkPolyDataAlgorithm
 {
 public:
@@ -53,21 +56,35 @@ public:
   /// TODO:
   void SetInputPoints(vtkPoints* points);
   /// TODO:
-  vtkSmartPointer<vtkPoints> GetControlPoints() const;
+  vtkSmartPointer<vtkPoints> GetInputPoints() const { return this->InputPoints.GetPointer(); };
+
+  /// TODO:
+  vtkSetVector2Macro(InputResolution, unsigned int);
+  /// TODO:
+  vtkGetVector2Macro(InputResolution, unsigned int);
+  /// TODO:
+  vtkSetVector2Macro(InterpolationDegrees, unsigned int);
+  /// TODO:
+  vtkGetVector2Macro(InterpolationDegrees, unsigned int);
+  /// TODO:
+  vtkSetMacro(UseCentripetal, bool);
+  vtkBooleanMacro(UseCentripetal, bool);
+  /// TODO:
+  vtkGetMacro(UseCentripetal, bool);
 
   /// Function computing the NURBS surface according to the pipeline architecture of VTK.
   int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
-protected:
+//protected: //TODO: FOR DEBUGGING EVERYTHING IS PULIC, UNCOMMENT THIS LINE
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void UpdateNurbsPolyData(vtkPolyData* polyData);
 
   /// TODO:
-  void ComputeParamsSurface();
+  void ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams);
   /// TODO:
-  void ComputeParamsCurve();
+  void ComputeParamsCurve(vtkIdList* indexList, vtkDoubleArray* parametersArray);
   /// TODO:
-  void ComputeKnotVector();
+  void ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* params);
   /// TODO:
   void BuildCoeffMatrix();
 
@@ -75,7 +92,6 @@ protected:
   void BasisFunction();
   /// TODO: helpers
   void FindSpanLinear();
-
 
   /// TODO: linalg
   void LuSolve();
@@ -85,15 +101,20 @@ protected:
   void ForwardSubstitution();
   /// TODO: linalg
   void BackwardSubstitution();
+  /// TODO: linalg
+  //void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* inOutArray);
   /// TODO: _linalg
   void DooLittle();
   /// TODO: knotvector
-  void GenerateKnotVector();
+  //void GenerateKnotVector(int degree, int numberOfControlPoints, bool clamped=true);
   /// TODO: linalg
   //void PointDistance();
+   
+  /// Convenience function to get point index from input point list with the two (u,v) indices
+  unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
 
 protected:
-  /// TODO:
+  /// Input control points. The number of points is u*v, and the strides contain the rows (0:[0,0], 1:[0,1], ...)
   vtkSmartPointer<vtkPoints> InputPoints;
 
   /// Number of data points along the u and v directions, respectively
