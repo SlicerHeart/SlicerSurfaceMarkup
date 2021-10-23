@@ -84,7 +84,7 @@ public:
   /// TODO:
   void ComputeParamsCurve(vtkIdList* indexList, vtkDoubleArray* parametersArray);
   /// TODO:
-  void ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* params);
+  void ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* params, vtkDoubleArray* outKnotVector);
   /// TODO:
   void BuildCoeffMatrix();
 

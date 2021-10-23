@@ -164,7 +164,10 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   vtkNew<vtkDoubleArray> vlParams;
   this->ComputeParamsSurface(ukParams, vlParams);
 
-
+  vtkNew<vtkDoubleArray> uKnots;
+  this->ComputeKnotVector(this->InterpolationDegrees[0], this->InputResolution[0], ukParams, uKnots);
+  vtkNew<vtkDoubleArray> vKnots;
+  this->ComputeKnotVector(this->InterpolationDegrees[1], this->InputResolution[1], vlParams, vKnots);
 
 
 
@@ -289,7 +292,7 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, 
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(vtkIdList* indexList, vtkDoubleArray* parametersArray) // (points, centripetal=False)
+void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(vtkIdList* indexList, vtkDoubleArray* outParametersArray) // (points, centripetal=False)
 {
   // """ Computes :math:`\\overline{u}_{k}` for curves.
   //
@@ -329,7 +332,7 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(vtkIdList* indexList, vtkDou
   
   // PORTING DONE //
 
-  if (!indexList || !parametersArray)
+  if (!indexList || !outParametersArray)
   {
     vtkErrorMacro("ComputeParamsCurve: Invalid input arguments");
     return;
@@ -352,22 +355,22 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(vtkIdList* indexList, vtkDou
   }
 
   // Insert first parameter (always with value 0) to the array
-  parametersArray->InsertNextValue(0.0);
+  outParametersArray->InsertNextValue(0.0);
 
   // Divide individual chord lengths by the total chord length and insert parameter into output array
   double currentSumChordLengths = 0.0;
   for (int i=0; i<chordLengthsArray->GetNumberOfValues()-1; ++i)
   {
     currentSumChordLengths += chordLengthsArray->GetValue(i);
-    parametersArray->InsertNextValue(currentSumChordLengths / sumAllChordLengths);
+    outParametersArray->InsertNextValue(currentSumChordLengths / sumAllChordLengths);
   }
 
   // Insert last parameter (always with value 1) to the array
-  parametersArray->InsertNextValue(1.0);
+  outParametersArray->InsertNextValue(1.0);
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* params) // (degree, num_points, params)
+void vtkSlicerNurbsFittingLogic::ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* inParams, vtkDoubleArray* outKnotVector) // (degree, num_points, params)
 {
   // """ Computes a knot vector from the parameter list using averaging method.
   //
@@ -395,29 +398,43 @@ void vtkSlicerNurbsFittingLogic::ComputeKnotVector(int degree, int numberOfContr
   //
   // return kv
 
+  // PORTING DONE //
+
   if (degree == 0 || numberOfControlPoints == 0)
   {
     vtkErrorMacro("GenerateKnotVector: Input values should be different than zero");
     return;
   }
-  if (!params)
+  if (!inParams)
   {
     vtkErrorMacro("GenerateKnotVector: Invalid parameters array");
     return;
   }
 
-  vtkNew<vtkDoubleArray> knotVector;
+  outKnotVector->Initialize();
 
   // Start knot vector
   for (int i=0; i<degree+1; ++i)
   {
-    knotVector->InsertNextValue(0.0);
+    outKnotVector->InsertNextValue(0.0);
   }
 
   // Use averaging method (Eqn 9.8) to compute internal knots in the knot vector
   for (int i=0; i<numberOfControlPoints-degree-1; ++i)
   {
-    //TODO:
+    double currentSumParams = 0.0;
+    for (int j=i+1; j<i+degree+1; ++j)
+    {
+      currentSumParams += inParams->GetValue(j);
+    }
+
+    outKnotVector->InsertNextValue((1.0/degree) * currentSumParams);
+  }
+
+  // End knot vector
+  for (int i=0; i<degree+1; ++i)
+  {
+    outKnotVector->InsertNextValue(1.0);
   }
 }
 
