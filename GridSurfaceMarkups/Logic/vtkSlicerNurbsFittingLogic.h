@@ -82,16 +82,16 @@ public:
   /// TODO:
   void ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams);
   /// TODO:
-  void ComputeParamsCurve(vtkIdList* indexList, vtkDoubleArray* parametersArray);
+  void ComputeParamsCurve(vtkIdList* pointIndexList, vtkDoubleArray* parametersArray);
   /// TODO:
-  void ComputeKnotVector(int degree, int numberOfControlPoints, vtkDoubleArray* params, vtkDoubleArray* outKnotVector);
+  void ComputeKnotVector(int degree, int numOfPoints, vtkDoubleArray* params, vtkDoubleArray* outKnotVector);
   /// TODO:
-  void BuildCoeffMatrix();
+  void BuildCoeffMatrix(int degree, vtkDoubleArray* knotVector, vtkDoubleArray* params, vtkPoints* points, double** outCoeffMatrix);
 
   /// TODO: helpers
   void BasisFunction();
   /// TODO: helpers
-  void FindSpanLinear();
+  double FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
 
   /// TODO: linalg
   void LuSolve();
@@ -112,8 +112,12 @@ public:
    
   /// Convenience function to get point index from input point list with the two (u,v) indices
   unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
+  /// Convenience function to allocate NxN matrix
+  double** AllocateSquareMatrix(int n);
+  /// Convenience function to delete NxN matrix
+  void DestructSquareMatrix(double** matrix, int n);
 
-protected:
+//protected: //TODO: FOR DEBUGGING EVERYTHING IS PULIC, UNCOMMENT THIS LINE
   /// Input control points. The number of points is u*v, and the strides contain the rows (0:[0,0], 1:[0,1], ...)
   vtkSmartPointer<vtkPoints> InputPoints;
 
