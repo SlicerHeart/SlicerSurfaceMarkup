@@ -171,10 +171,11 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   vtkNew<vtkDoubleArray> vKnots;
   this->ComputeKnotVector(this->InterpolationDegrees[1], this->InputResolution[1], vlParams, vKnots);
 
-  double** matrixA = this->AllocateMatrix(this->InputResolution[0]);
-
+  //
   // Do global interpolation along the u direction
+  //
   vtkNew<vtkPoints> controlPointsR;
+  double** matrixA = this->AllocateMatrix(this->InputResolution[0]);
   for (int v=0; v<this->InputResolution[1]; ++v)
   {
     // Collect column point indices
@@ -189,15 +190,31 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
     // Insert control points for each point column
     this->LuSolve(matrixA, this->InputResolution[0], points, controlPointsR);
   }
-
-
   this->DestructMatrix(matrixA, this->InputResolution[0]);
 
+  //
+  // Do global interpolation along the v direction
+  //
+  vtkNew<vtkPoints> controlPoints;
+  matrixA = this->AllocateMatrix(this->InputResolution[1]);
+  for (int u=0; u<this->InputResolution[0]; ++u)
+  {
+    // Collect row point indices
+    vtkNew<vtkPoints> points;
+    for (int v=0; v<this->InputResolution[1]; ++v)
+    {
+      points->InsertNextPoint(controlPointsR->GetPoint(v * this->InputResolution[0] + u));
+    }
 
+    this->BuildCoeffMatrix(this->InterpolationDegrees[1], vKnots, vlParams, points, matrixA);
 
+    // Insert control points for each point row
+    this->LuSolve(matrixA, this->InputResolution[1], points, controlPoints);
+  }
+  this->DestructMatrix(matrixA, this->InputResolution[1]);
 
   vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
-
+  //TODO: Fill output
 }
 
 //---------------------------------------------------------------------------
@@ -917,6 +934,7 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* 
   }
 }
 
+/*
 //---------------------------------------------------------------------------
 void vtkSlicerNurbsFittingLogic::DooLittle() // (matrix_a):
 {
@@ -950,6 +968,7 @@ void vtkSlicerNurbsFittingLogic::DooLittle() // (matrix_a):
   // return matrix_l, matrix_u
 
 }
+*/
 
 //---------------------------------------------------------------------------
 unsigned int vtkSlicerNurbsFittingLogic::GetPointIndexUV(unsigned int u, unsigned int v)

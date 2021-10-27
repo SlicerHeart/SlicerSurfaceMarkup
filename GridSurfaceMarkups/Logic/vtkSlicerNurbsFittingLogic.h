@@ -104,7 +104,7 @@ public:
   /// TODO: linalg
   //void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* inOutArray);
   /// TODO: _linalg
-  void DooLittle();
+  //void DooLittle();
    
   /// Convenience function to get point index from input point list with the two (u,v) indices
   unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
