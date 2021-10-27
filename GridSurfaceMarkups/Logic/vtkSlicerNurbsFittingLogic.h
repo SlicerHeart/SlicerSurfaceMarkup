@@ -89,9 +89,9 @@ public:
   void BuildCoeffMatrix(int degree, vtkDoubleArray* knotVector, vtkDoubleArray* params, vtkPoints* points, double** outCoeffMatrix);
 
   /// TODO: helpers
-  void BasisFunction();
+  void BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions);
   /// TODO: helpers
-  double FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
+  int FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
 
   /// TODO: linalg
   void LuSolve();
@@ -105,10 +105,6 @@ public:
   //void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* inOutArray);
   /// TODO: _linalg
   void DooLittle();
-  /// TODO: knotvector
-  //void GenerateKnotVector(int degree, int numberOfControlPoints, bool clamped=true);
-  /// TODO: linalg
-  //void PointDistance();
    
   /// Convenience function to get point index from input point list with the two (u,v) indices
   unsigned int GetPointIndexUV(unsigned int u, unsigned int v);

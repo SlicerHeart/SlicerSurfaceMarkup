@@ -171,7 +171,7 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   vtkNew<vtkDoubleArray> vKnots;
   this->ComputeKnotVector(this->InterpolationDegrees[1], this->InputResolution[1], vlParams, vKnots);
 
-  // Do global interpolation on the u-direction
+  // Do global interpolation along the u direction
   double** matrixA = this->AllocateSquareMatrix(this->InputResolution[0]);
   for (int v=0; v<this->InputResolution[1]; ++v)
   {
@@ -351,7 +351,7 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(
 
   if (!pointIndexList || !outParametersArray)
   {
-    vtkErrorMacro("ComputeParamsCurve: Invalid input arguments");
+    vtkErrorMacro("ComputeParamsCurve: Invalid arguments");
     return;
   }
 
@@ -420,12 +420,17 @@ void vtkSlicerNurbsFittingLogic::ComputeKnotVector(
 
   if (degree == 0 || numOfPoints == 0)
   {
-    vtkErrorMacro("GenerateKnotVector: Input values should be different than zero");
+    vtkErrorMacro("ComputeKnotVector: Input values should be different than zero");
     return;
   }
   if (!inParams)
   {
-    vtkErrorMacro("GenerateKnotVector: Invalid parameters array");
+    vtkErrorMacro("ComputeKnotVector: Invalid parameters array");
+    return;
+  }
+  if (!outKnotVector)
+  {
+    vtkErrorMacro("ComputeKnotVector: Invalid output array");
     return;
   }
 
@@ -490,14 +495,21 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix(
   // # Return coefficient matrix
   // return matrix_a
 
+  // PORTING DONE //
+
   if (degree == 0)
   {
-    vtkErrorMacro("GenerateKnotVector: Input values should be different than zero");
+    vtkErrorMacro("BuildCoeffMatrix: Invalid input degree");
     return;
   }
-  if (!knotVector || !params || !points || !outCoeffMatrix)
+  if (!knotVector || !params || !points)
   {
-    vtkErrorMacro("GenerateKnotVector: Invalid input arrays");
+    vtkErrorMacro("BuildCoeffMatrix: Invalid input arrays");
+    return;
+  }
+  if (!outCoeffMatrix)
+  {
+    vtkErrorMacro("BuildCoeffMatrix: Invalid output array");
     return;
   }
 
@@ -514,8 +526,14 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix(
 
   for (int i=0; i<numPoints; ++i)
   {
-    double span = this->FindSpanLinear(degree, knotVector, numPoints, params->GetValue(i));
-    //TODO:
+    double knot = params->GetValue(i);
+    int span = this->FindSpanLinear(degree, knotVector, numPoints, knot);
+    vtkNew<vtkDoubleArray> basisFunction;
+    this->BasisFunction(degree, knotVector, span, knot, basisFunction);
+    for (int n=0; n<basisFunction->GetNumberOfValues(); ++n)
+    {
+      outCoeffMatrix[i][span-degree+n] = basisFunction->GetValue(n);
+    }
   }
 }
 
@@ -524,7 +542,7 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix(
 //
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::BasisFunction() // (degree, knot_vector, span, knot)
+void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions) // (degree, knot_vector, span, knot)
 {
   // """ Computes the non-vanishing basis functions for a single parameter.
   //
@@ -559,10 +577,47 @@ void vtkSlicerNurbsFittingLogic::BasisFunction() // (degree, knot_vector, span, 
   //
   // return N
 
+  // PORTING DONE //
+
+  if (!outBasisFunctions)
+  {
+    vtkErrorMacro("GenerateKnotVector: Invalid output array");
+    return;
+  }
+
+  double* left = new double[degree + 1];
+  double* right = new double[degree + 1];
+  vtkDoubleArray* N = outBasisFunctions;
+  N->Initialize();
+  N->SetNumberOfValues(degree + 1);
+  for (int i=0; i<degree+1; ++i)
+  {
+    left[i] = 0.0;
+    right[i] = 0.0;
+    N->SetValue(i, 1.0); // N[0] = 1.0 by definition
+  }
+
+  for (int j=1; j<degree+1; ++j)
+  {
+    left[j] = knot - knotVector->GetValue(span + 1 - j);
+    right[j] = knotVector->GetValue(span + j) - knot;
+    double saved = 0.0;
+    for (int r=0; r<j; ++r)
+    {
+      double temp = N->GetValue(r) / (right[r + 1] + left[j - r]);
+      N->SetValue(r, saved + right[r + 1] * temp);
+      saved = left[j - r] * temp;
+    }
+
+    N->SetValue(j, saved);
+  }
+
+  delete[] left;
+  delete[] right;
 }
 
 //---------------------------------------------------------------------------
-double vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot) // (degree, knot_vector, num_ctrlpts, knot, **kwargs)
+int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot) // (degree, knot_vector, num_ctrlpts, knot, **kwargs)
 {
   // """ Finds the span of a single knot over the knot vector using linear search.
   //
