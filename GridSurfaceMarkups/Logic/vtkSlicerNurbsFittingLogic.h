@@ -94,13 +94,13 @@ public:
   int FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
 
   /// TODO: linalg
-  void LuSolve();
+  void LuSolve(double** coeffMatrix, int matrixSize, vtkPoints* points, vtkPoints* outControlPointsR);
   /// TODO: linalg
-  void LuDecomposition();
+  void LuDecomposition(double** matrixA, double** matrixL, double** matrixU, int size);
   /// TODO: linalg
-  void ForwardSubstitution();
+  void ForwardSubstitution(double** matrixL, double* b, int size, double* outY);
   /// TODO: linalg
-  void BackwardSubstitution();
+  void BackwardSubstitution(double** matrixU, double* y, int size, double* outX);
   /// TODO: linalg
   //void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* inOutArray);
   /// TODO: _linalg
@@ -109,9 +109,13 @@ public:
   /// Convenience function to get point index from input point list with the two (u,v) indices
   unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
   /// Convenience function to allocate NxN matrix
-  double** AllocateSquareMatrix(int n);
+  /// \param m Number of rows
+  /// \param n Number of columns. If omitted it is considered a square mxm matrix
+  double** AllocateMatrix(int m, int n=0);
   /// Convenience function to delete NxN matrix
-  void DestructSquareMatrix(double** matrix, int n);
+  /// \param m Number of rows
+  /// \param n Number of columns. If omitted it is considered a square mxm matrix
+  void DestructMatrix(double** matrix, int m, int n=0);
 
 //protected: //TODO: FOR DEBUGGING EVERYTHING IS PULIC, UNCOMMENT THIS LINE
   /// Input control points. The number of points is u*v, and the strides contain the rows (0:[0,0], 1:[0,1], ...)

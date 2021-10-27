@@ -171,8 +171,10 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   vtkNew<vtkDoubleArray> vKnots;
   this->ComputeKnotVector(this->InterpolationDegrees[1], this->InputResolution[1], vlParams, vKnots);
 
+  double** matrixA = this->AllocateMatrix(this->InputResolution[0]);
+
   // Do global interpolation along the u direction
-  double** matrixA = this->AllocateSquareMatrix(this->InputResolution[0]);
+  vtkNew<vtkPoints> controlPointsR;
   for (int v=0; v<this->InputResolution[1]; ++v)
   {
     // Collect column point indices
@@ -181,10 +183,15 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
     {
       points->InsertNextPoint(this->InputPoints->GetPoint(this->GetPointIndexUV(u,v)));
     }
+
     this->BuildCoeffMatrix(this->InterpolationDegrees[0], uKnots, ukParams, points, matrixA);
-    //TODO: LuSolve
+
+    // Insert control points for each point column
+    this->LuSolve(matrixA, this->InputResolution[0], points, controlPointsR);
   }
-  this->DestructSquareMatrix(matrixA, this->InputResolution[0]);
+
+
+  this->DestructMatrix(matrixA, this->InputResolution[0]);
 
 
 
@@ -658,7 +665,7 @@ int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotV
 //
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::LuSolve() // (matrix_a, b)
+void vtkSlicerNurbsFittingLogic::LuSolve(double** coeffMatrix, int matrixSize, vtkPoints* points, vtkPoints* outControlPointsR) // (matrix_a, b)
 {
   // """ Computes the solution to a system of linear equations.
   //
@@ -693,10 +700,61 @@ void vtkSlicerNurbsFittingLogic::LuSolve() // (matrix_a, b)
   // # Return the solution
   // return x
 
+  // PORTING DONE //
+
+  if (!coeffMatrix || !points)
+  {
+    vtkErrorMacro("LuSolve: Invalid input coefficients matrix or points");
+    return;
+  }
+
+  int dim = 3;
+  int numX = points->GetNumberOfPoints();
+
+  double** matrixL = this->AllocateMatrix(matrixSize);
+  double** matrixU = this->AllocateMatrix(matrixSize);
+  double** x = this->AllocateMatrix(numX, dim);
+
+  this->LuDecomposition(coeffMatrix, matrixL, matrixU, matrixSize);
+
+  for (int i=0; i<dim; ++i)
+  {
+    // Get i'th coordinate of each point into a column vector
+    double* b = new double[numX];
+    for (int j=0; j<numX; ++j)
+    {
+      b[j] = points->GetPoint(j)[i];
+    }
+    
+    double* y = new double[numX];
+    this->ForwardSubstitution(matrixL, b, numX, y);
+
+    double* xt = new double[numX];
+    this->BackwardSubstitution(matrixU, y, numX, xt);
+
+    for (int j=0; j<numX; ++j)
+    {
+      x[j][i] = xt[j];
+    }
+
+    delete[] b;
+    delete[] y;
+    delete[] xt;
+  }
+
+  // Insert control points from solution matrix
+  for (int j=0; j<numX; ++j)
+  {
+    outControlPointsR->InsertNextPoint(x[j][0], x[j][1], x[j][2]);
+  }
+
+  this->DestructMatrix(matrixL, matrixSize);
+  this->DestructMatrix(matrixU, matrixSize);
+  this->DestructMatrix(x, numX, dim);
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::LuDecomposition() // (matrix_a)
+void vtkSlicerNurbsFittingLogic::LuDecomposition(double** matrixA, double** matrixL, double** matrixU, int size) // (matrix_a)
 {
   // """ LU-Factorization method using Doolittle's Method for solution of linear systems.
   //
@@ -720,38 +778,49 @@ void vtkSlicerNurbsFittingLogic::LuDecomposition() // (matrix_a)
   // # Return L and U matrices
   // return _linalg.doolittle(matrix_a)
 
-  // From https://www.tutorialspoint.com/cplusplus-program-to-perform-lu-decomposition-of-any-matrix
-  //void LUdecomposition(float a[10][10], float l[10][10], float u[10][10], int n) {
-  //   int i = 0, j = 0, k = 0;
-  //   for (i = 0; i < n; i++) {
-  //      for (j = 0; j < n; j++) {
-  //         if (j < i)
-  //         l[j][i] = 0;
-  //         else {
-  //            l[j][i] = a[j][i];
-  //            for (k = 0; k < i; k++) {
-  //               l[j][i] = l[j][i] - l[j][k] * u[k][i];
-  //            }
-  //         }
-  //      }
-  //      for (j = 0; j < n; j++) {
-  //         if (j < i)
-  //         u[i][j] = 0;
-  //         else if (j == i)
-  //         u[i][j] = 1;
-  //         else {
-  //            u[i][j] = a[i][j] / l[i][i];
-  //            for (k = 0; k < i; k++) {
-  //               u[i][j] = u[i][j] - ((l[i][k] * u[k][j]) / l[i][i]);
-  //            }
-  //         }
-  //      }
-  //   }
-  //}
+  // PORTING DONE // L and U matrices differ from the Python implementation but their product is exactly matrix A
+
+  int n = size;
+  double** a = matrixA;
+  double** l = matrixL;
+  double** u = matrixU;
+
+  // From https://titanwolf.org/Network/Articles/Article?AID=af9bbd90-f722-4bec-803c-523bd0ca1d9e
+  for (int i = 0; i < n; i++)
+  {
+    for (int j = 0; j < n; j++)
+    {
+      if (j < i)
+        l[j][i] = 0;
+      else
+      {
+        l[j][i] = a[j][i];
+        for (int k = 0; k < i; k++)
+        {
+          l[j][i] = l[j][i] - l[j][k] * u[k][i];
+        }
+      }
+    }
+    for (int j = 0; j < n; j++)
+    {
+      if (j < i)
+        u[i][j] = 0;
+      else if (j == i)
+        u[i][j] = 1;
+      else
+      {
+        u[i][j] = a[i][j]/l[i][i];
+        for (int k = 0; k < i; k++)
+        {
+          u[i][j] = u[i][j] - ((l[i][k] * u[k][j])/l[i][i]);
+        }
+      }
+    }
+  }
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ForwardSubstitution()
+void vtkSlicerNurbsFittingLogic::ForwardSubstitution(double** matrixL, double* b, int size, double* outY) // (matrix_l, matrix_b)
 {
   // """ Forward substitution method for the solution of linear systems.
   //
@@ -773,10 +842,34 @@ void vtkSlicerNurbsFittingLogic::ForwardSubstitution()
   //     matrix_y[i] /= float(matrix_l[i][i])
   // return matrix_y
 
+  // PORTING DONE //
+
+  if (!matrixL || !b || !outY)
+  {
+    vtkErrorMacro("ForwardSubstitution: Invalid input/output arguments");
+    return;
+  }
+
+  outY[0] = b[0] / matrixL[0][0];
+  for (int i=1; i<size; ++i)
+  {
+    outY[i] = 0.0;
+  }
+
+  for (int i=1; i<size; ++i)
+  {
+    double sum = 0.0;
+    for (int j=0; j<i; ++j)
+    {
+      sum += matrixL[i][j] * outY[j];
+    }
+    outY[i] = b[i] - sum;
+    outY[i] /= matrixL[i][i];
+  }
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::BackwardSubstitution()
+void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* y, int size, double* outX) // (matrix_u, matrix_y)
 {
   // """ Backward substitution method for the solution of linear systems.
   //
@@ -798,6 +891,30 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution()
   //     matrix_x[i] /= float(matrix_u[i][i])
   // return matrix_x
 
+  // PORTING DONE //
+
+  if (!matrixU || !y || !outX)
+  {
+    vtkErrorMacro("BackwardSubstitution: Invalid input/output arguments");
+    return;
+  }
+
+  outX[size-1] = y[size-1] / matrixU[size-1][size-1];
+  for (int i=0; i<size-1; ++i)
+  {
+    outX[i] = 0.0;
+  }
+
+  for (int i=size-2; i>=0; --i)
+  {
+    double sum = 0.0;
+    for (int j=i; j<size; ++j)
+    {
+      sum += matrixU[i][j] * outX[j];
+    }
+    outX[i] = y[i] - sum;
+    outX[i] /= matrixU[i][i];
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -847,10 +964,14 @@ unsigned int vtkSlicerNurbsFittingLogic::GetPointIndexUV(unsigned int u, unsigne
 }
 
 //---------------------------------------------------------------------------
-double** vtkSlicerNurbsFittingLogic::AllocateSquareMatrix(int n)
+double** vtkSlicerNurbsFittingLogic::AllocateMatrix(int m, int n/*=0*/)
 {
-  double** matrix = new double*[n];
-  for (int i=0; i<n; ++i)
+  if (n == 0)
+  {
+    n = m;
+  }
+  double** matrix = new double*[m];
+  for (int i=0; i<m; ++i)
   {
     matrix[i] = new double[n];
   }
@@ -859,11 +980,15 @@ double** vtkSlicerNurbsFittingLogic::AllocateSquareMatrix(int n)
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::DestructSquareMatrix(double** matrix, int n)
+void vtkSlicerNurbsFittingLogic::DestructMatrix(double** matrix, int m, int n/*=0*/)
 {
-  for (int i=0; i<n; ++i)
+  if (n == 0)
   {
-    delete [] matrix[i];
+    n = m;
   }
-  delete [] matrix;
+  for (int i=0; i<m; ++i)
+  {
+    delete[] matrix[i];
+  }
+  delete[] matrix;
 }
