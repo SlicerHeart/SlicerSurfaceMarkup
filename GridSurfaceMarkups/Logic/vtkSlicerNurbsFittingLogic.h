@@ -75,7 +75,7 @@ public:
   /// Function computing the NURBS surface according to the pipeline architecture of VTK.
   int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
-//protected: //TODO: FOR DEBUGGING EVERYTHING IS PULIC, UNCOMMENT THIS LINE
+protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void UpdateNurbsPolyData(vtkPolyData* polyData);
 
@@ -101,10 +101,6 @@ public:
   void ForwardSubstitution(double** matrixL, double* b, int size, double* outY);
   /// TODO: linalg
   void BackwardSubstitution(double** matrixU, double* y, int size, double* outX);
-  /// TODO: linalg
-  //void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* inOutArray);
-  /// TODO: _linalg
-  //void DooLittle();
    
   /// Convenience function to get point index from input point list with the two (u,v) indices
   unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
@@ -117,7 +113,7 @@ public:
   /// \param n Number of columns. If omitted it is considered a square mxm matrix
   void DestructMatrix(double** matrix, int m, int n=0);
 
-//protected: //TODO: FOR DEBUGGING EVERYTHING IS PULIC, UNCOMMENT THIS LINE
+protected:
   /// Input control points. The number of points is u*v, and the strides contain the rows (0:[0,0], 1:[0,1], ...)
   vtkSmartPointer<vtkPoints> InputPoints;
 

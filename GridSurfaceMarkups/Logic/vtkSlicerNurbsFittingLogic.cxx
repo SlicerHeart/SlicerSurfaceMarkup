@@ -213,6 +213,7 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   }
   this->DestructMatrix(matrixA, this->InputResolution[1]);
 
+  // Fill output
   vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
   //TODO: Fill output
 }
@@ -273,8 +274,6 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, 
   //
   // return uk, vl
 
-  // PORTING DONE //
-
   // Compute parameters for each curve on the v direction. Concatenate into one parameter array
   vtkNew<vtkDoubleArray> ukParamsTemp;
   for (int v=0; v<this->InputResolution[1]; ++v)
@@ -301,7 +300,6 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, 
     }
     ukParams->InsertNextValue(sumKnots_v / this->InputResolution[1]);
   }
-
 
   // Compute parameters for each curve on the u direction. Concatenate into one parameter array
   vtkNew<vtkDoubleArray> vlParamsTemp;
@@ -371,8 +369,6 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(
   //
   // return uk
   
-  // PORTING DONE //
-
   if (!pointIndexList || !outParametersArray)
   {
     vtkErrorMacro("ComputeParamsCurve: Invalid arguments");
@@ -439,8 +435,6 @@ void vtkSlicerNurbsFittingLogic::ComputeKnotVector(
   // kv += [1.0 for _ in range(degree + 1)]
   //
   // return kv
-
-  // PORTING DONE //
 
   if (degree == 0 || numOfPoints == 0)
   {
@@ -518,8 +512,6 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix(
   //
   // # Return coefficient matrix
   // return matrix_a
-
-  // PORTING DONE //
 
   if (degree == 0)
   {
@@ -601,8 +593,6 @@ void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotV
   //
   // return N
 
-  // PORTING DONE //
-
   if (!outBasisFunctions)
   {
     vtkErrorMacro("GenerateKnotVector: Invalid output array");
@@ -664,8 +654,6 @@ int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotV
   //
   // return span - 1
  
-  // PORTING DONE //
-
   // Knot span index starts from zero
   int span = degree + 1;
   
@@ -716,8 +704,6 @@ void vtkSlicerNurbsFittingLogic::LuSolve(double** coeffMatrix, int matrixSize, v
   //
   // # Return the solution
   // return x
-
-  // PORTING DONE //
 
   if (!coeffMatrix || !points)
   {
@@ -795,7 +781,7 @@ void vtkSlicerNurbsFittingLogic::LuDecomposition(double** matrixA, double** matr
   // # Return L and U matrices
   // return _linalg.doolittle(matrix_a)
 
-  // PORTING DONE // L and U matrices differ from the Python implementation but their product is exactly matrix A
+  // Porting note: L and U matrices differ from the Python implementation but their product is exactly matrix A
 
   int n = size;
   double** a = matrixA;
@@ -859,8 +845,6 @@ void vtkSlicerNurbsFittingLogic::ForwardSubstitution(double** matrixL, double* b
   //     matrix_y[i] /= float(matrix_l[i][i])
   // return matrix_y
 
-  // PORTING DONE //
-
   if (!matrixL || !b || !outY)
   {
     vtkErrorMacro("ForwardSubstitution: Invalid input/output arguments");
@@ -908,8 +892,6 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* 
   //     matrix_x[i] /= float(matrix_u[i][i])
   // return matrix_x
 
-  // PORTING DONE //
-
   if (!matrixU || !y || !outX)
   {
     vtkErrorMacro("BackwardSubstitution: Invalid input/output arguments");
@@ -933,42 +915,6 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* 
     outX[i] /= matrixU[i][i];
   }
 }
-
-/*
-//---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::DooLittle() // (matrix_a):
-{
-  // """ Doolittle's Method for LU-factorization.
-  //
-  // :param matrix_a: Input matrix (must be a square matrix)
-  // :type matrix_a: list, tuple
-  // :return: a tuple containing matrices (L,U)
-  // :rtype: tuple
-  // """
-  // # Initialize L and U matrices
-  // matrix_u = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
-  // matrix_l = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
-  //
-  // # Doolittle Method
-  // for i in range(0, len(matrix_a)):
-  //     for k in range(i, len(matrix_a)):
-  //         # Upper triangular (U) matrix
-  //         matrix_u[i][k] = float(matrix_a[i][k] - sum([matrix_l[i][j] * matrix_u[j][k] for j in range(0, i)]))
-  //         # Lower triangular (L) matrix
-  //         if i == k:
-  //             matrix_l[i][i] = 1.0
-  //         else:
-  //             matrix_l[k][i] = float(matrix_a[k][i] - sum([matrix_l[k][j] * matrix_u[j][i] for j in range(0, i)]))
-  //             # Handle zero division error
-  //             try:
-  //                 matrix_l[k][i] /= float(matrix_u[i][i])
-  //             except ZeroDivisionError:
-  //                 matrix_l[k][i] = 0.0
-  //
-  // return matrix_l, matrix_u
-
-}
-*/
 
 //---------------------------------------------------------------------------
 unsigned int vtkSlicerNurbsFittingLogic::GetPointIndexUV(unsigned int u, unsigned int v)
