@@ -79,27 +79,56 @@ protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void UpdateNurbsPolyData(vtkPolyData* polyData);
 
-  /// TODO:
+  /// Evaluate surface: compute interpolated surface points from control points and knot vectors
+  void EvaluateSurface();
+  
+  /// \brief Compute uk and vl parameter vectors from input points
+  /// 
+  /// The data points array has a row size of InputResolution[0] and column size of InputResolution[1] and it is 1-dimensional.
+  /// Please refer to The NURBS Book (2nd Edition), pp.366-367 for details on how to compute uk and vl arrays for global surface
+  /// interpolation.
+  ///
+  /// Please note that this function is not a direct implementation of Algorithm A9.3 which can be found on The NURBS Book
+  /// (2nd Edition), pp.377-378. However, the output is the same.
+  ///
+  /// \param ukParams Output array for uk parameters
+  /// \param vkParams Output array for vl parameters
   void ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams);
-  /// TODO:
+  /// Compute uk parameter array for curves.
+  /// Please refer to the Equations 9.4 and 9.5 for chord length parametrization, and Equation 9.6 for centripetal method
+  /// on The NURBS Book (2nd Edition), pp.364-365.
+  ///
+  /// \param pointIndexList: List of point IDs in \sa InputPoints defining the curve to parametrize.
+  /// \param parametersArray: Output array for computed parameters.
   void ComputeParamsCurve(vtkIdList* pointIndexList, vtkDoubleArray* parametersArray);
-  /// TODO:
+  /// Compute a knot vector from the parameter list using averaging method.
+  /// Please refer to the Equation 9.8 on The NURBS Book (2nd Edition), pp.365 for details.
   void ComputeKnotVector(int degree, int numOfPoints, vtkDoubleArray* params, vtkDoubleArray* outKnotVector);
-  /// TODO:
+  /// Build the coefficient matrix for global interpolation.
+  /// This function only uses data points to build the coefficient matrix. Please refer to The NURBS Book (2nd Edition),
+  /// pp364-370 for details.
   void BuildCoeffMatrix(int degree, vtkDoubleArray* knotVector, vtkDoubleArray* params, vtkPoints* points, double** outCoeffMatrix);
 
-  /// TODO: helpers
+  /// Computes the non-vanishing basis functions for a single parameter.
+  /// Implementation of Algorithm A2.2 from The NURBS Book by Piegl & Tiller. Uses recurrence to compute the basis functions,
+  /// also known as Cox - de Boor recursion formula.
   void BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions);
-  /// TODO: helpers
+  /// Find the span of a single knot over the knot vector using linear search.
+  /// Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
   int FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
 
-  /// TODO: linalg
+  /// \brief Compute the solution to a system of linear equations.
+  //
+  /// This function solves Ax = b using LU decomposition. A is a NxN matrix, b is NxM matrix of M column vectors.
+  /// Each column of x is a solution for corresponding column of b.
   void LuSolve(double** coeffMatrix, int matrixSize, vtkPoints* points, vtkPoints* outControlPointsR);
-  /// TODO: linalg
+  /// LU-Factorization method for solution of linear systems. Decomposes the matrix A such that A = LU.
   void LuDecomposition(double** matrixA, double** matrixL, double** matrixU, int size);
-  /// TODO: linalg
+  /// \brief Forward substitution method for the solution of linear systems.
+  /// Solves the equation Ly = b using forward substitution method where L is a lower triangular matrix and b is a column matrix.
   void ForwardSubstitution(double** matrixL, double* b, int size, double* outY);
-  /// TODO: linalg
+  /// \brief Backward substitution method for the solution of linear systems.
+  /// Solves the equation Ux = y using backward substitution method where U is a upper triangular matrix and y is a column matrix.
   void BackwardSubstitution(double** matrixU, double* y, int size, double* outX);
    
   /// Convenience function to get point index from input point list with the two (u,v) indices

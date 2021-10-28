@@ -216,20 +216,69 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   // Fill output
   vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
   //TODO: Fill output
+
+  // Note from abstract.Surface: smaller the delta value, smoother the surface.
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams) // (points, size_u, size_v, centripetal=False)
+void vtkSlicerNurbsFittingLogic::EvaluateSurface() // (self, datadict, **kwargs):
 {
-  // """ Computes :math:`\\overline{u}_{k}` and :math:`\\overline{u}_{l}` for surfaces.
-  //
-  // The data points array has a row size of ``size_v`` and column size of ``size_u`` and it is 1-dimensional. Please
-  // refer to The NURBS Book (2nd Edition), pp.366-367 for details on how to compute :math:`\\overline{u}_{k}` and
-  // :math:`\\overline{u}_{l}` arrays for global surface interpolation.
-  //
-  // Please note that this function is not a direct implementation of Algorithm A9.3 which can be found on The NURBS Book
-  // (2nd Edition), pp.377-378. However, the output is the same.
-  //
+  // """ Evaluates the surface.
+  // 
+  // Keyword Arguments:
+  //     * ``start``: starting parametric position for evaluation
+  //     * ``stop``: ending parametric position for evaluation
+  // 
+  // :param datadict: data dictionary containing the necessary variables
+  // :type datadict: dict
+  // :return: evaluated points
+  // :rtype: list
+  // """
+  // # Geometry data from datadict
+  // sample_size = datadict['sample_size']
+  // degree = datadict['degree']
+  // knotvector = datadict['knotvector']
+  // ctrlpts = datadict['control_points']
+  // size = datadict['size']
+  // dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
+  // pdimension = datadict['pdimension']
+  // precision = datadict['precision']
+  // 
+  // # Keyword arguments
+  // start = kwargs.get('start', [0.0 for _ in range(pdimension)])
+  // stop = kwargs.get('stop', [1.0 for _ in range(pdimension)])
+  // 
+  // # Algorithm A3.5
+  // spans = [[] for _ in range(pdimension)]
+  // basis = [[] for _ in range(pdimension)]
+  // for idx in range(pdimension):
+  //     knots = linalg.linspace(start[idx], stop[idx], sample_size[idx], decimals=precision)
+  //     spans[idx] = helpers.find_spans(degree[idx], knotvector[idx], size[idx], knots, self._span_func)
+  //     basis[idx] = helpers.basis_functions(degree[idx], knotvector[idx], spans[idx], knots)
+  // 
+  // eval_points = []
+  // for i in range(len(spans[0])):
+  //     idx_u = spans[0][i] - degree[0]
+  //     for j in range(len(spans[1])):
+  //         idx_v = spans[1][j] - degree[1]
+  //         spt = [0.0 for _ in range(dimension)]
+  //         for k in range(0, degree[0] + 1):
+  //             temp = [0.0 for _ in range(dimension)]
+  //             for l in range(0, degree[1] + 1):
+  //                 temp[:] = [tmp + (basis[1][j][l] * cp) for tmp, cp in
+  //                            zip(temp, ctrlpts[idx_v + l + (size[1] * (idx_u + k))])]
+  //             spt[:] = [pt + (basis[0][i][k] * tmp) for pt, tmp in zip(spt, temp)]
+  // 
+  //         eval_points.append(spt)
+  // 
+  // return eval_points
+   
+  //TODO:
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams)
+{
   // :param points: data points
   // :type points: list, tuple
   // :param size_u: number of points on the u-direction
@@ -331,13 +380,8 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsSurface(vtkDoubleArray* ukParams, 
 
 //---------------------------------------------------------------------------
 void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(
-  vtkIdList* pointIndexList, vtkDoubleArray* outParametersArray) // (points, centripetal=False)
+  vtkIdList* pointIndexList, vtkDoubleArray* outParametersArray)
 {
-  // """ Computes :math:`\\overline{u}_{k}` for curves.
-  //
-  // Please refer to the Equations 9.4 and 9.5 for chord length parametrization, and Equation 9.6 for centripetal method
-  // on The NURBS Book (2nd Edition), pp.364-365.
-  //
   // :param points: data points
   // :type points: list, tuple
   // :param centripetal: activates centripetal parametrization method
@@ -408,12 +452,8 @@ void vtkSlicerNurbsFittingLogic::ComputeParamsCurve(
 
 //---------------------------------------------------------------------------
 void vtkSlicerNurbsFittingLogic::ComputeKnotVector(
-  int degree, int numOfPoints, vtkDoubleArray* inParams, vtkDoubleArray* outKnotVector) // (degree, num_points, params)
+  int degree, int numOfPoints, vtkDoubleArray* inParams, vtkDoubleArray* outKnotVector)
 {
-  // """ Computes a knot vector from the parameter list using averaging method.
-  //
-  // Please refer to the Equation 9.8 on The NURBS Book (2nd Edition), pp.365 for details.
-  //
   // :param degree: degree
   // :type degree: int
   // :param num_points: number of data points
@@ -481,13 +521,8 @@ void vtkSlicerNurbsFittingLogic::ComputeKnotVector(
 
 //---------------------------------------------------------------------------
 void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix(
-  int degree, vtkDoubleArray* knotVector, vtkDoubleArray* params, vtkPoints* points, double** outCoeffMatrix) // (degree, knotvector, params, points)
+  int degree, vtkDoubleArray* knotVector, vtkDoubleArray* params, vtkPoints* points, double** outCoeffMatrix)
 {
-  // """ Builds the coefficient matrix for global interpolation.
-  //
-  // This function only uses data points to build the coefficient matrix. Please refer to The NURBS Book (2nd Edition),
-  // pp364-370 for details.
-  //
   // :param degree: degree
   // :type degree: int
   // :param knotvector: knot vector
@@ -558,14 +593,8 @@ void vtkSlicerNurbsFittingLogic::BuildCoeffMatrix(
 //
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions) // (degree, knot_vector, span, knot)
+void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions)
 {
-  // """ Computes the non-vanishing basis functions for a single parameter.
-  //
-  // Implementation of Algorithm A2.2 from The NURBS Book by Piegl & Tiller.
-  // Uses recurrence to compute the basis functions, also known as Cox - de
-  // Boor recursion formula.
-  //
   // :param degree: degree, :math:`p`
   // :type degree: int
   // :param knot_vector: knot vector, :math:`U`
@@ -631,12 +660,8 @@ void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotV
 }
 
 //---------------------------------------------------------------------------
-int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot) // (degree, knot_vector, num_ctrlpts, knot, **kwargs)
+int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot)
 {
-  // """ Finds the span of a single knot over the knot vector using linear search.
-  //
-  // Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
-  //
   // :param degree: degree, :math:`p`
   // :type degree: int
   // :param knot_vector: knot vector, :math:`U`
@@ -670,15 +695,8 @@ int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotV
 //
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::LuSolve(double** coeffMatrix, int matrixSize, vtkPoints* points, vtkPoints* outControlPointsR) // (matrix_a, b)
+void vtkSlicerNurbsFittingLogic::LuSolve(double** coeffMatrix, int matrixSize, vtkPoints* points, vtkPoints* outControlPointsR)
 {
-  // """ Computes the solution to a system of linear equations.
-  //
-  // This function solves :math:`Ax = b` using LU decomposition. :math:`A` is a
-  // :math:`N \\times N` matrix, :math:`b` is :math:`N \\times M` matrix of
-  // :math:`M` column vectors. Each column of :math:`x` is a solution for
-  // corresponding column of :math:`b`.
-  //
   // :param matrix_a: matrix A
   // :type m_l: list
   // :param b: matrix of M column vectors
@@ -757,15 +775,8 @@ void vtkSlicerNurbsFittingLogic::LuSolve(double** coeffMatrix, int matrixSize, v
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::LuDecomposition(double** matrixA, double** matrixL, double** matrixU, int size) // (matrix_a)
+void vtkSlicerNurbsFittingLogic::LuDecomposition(double** matrixA, double** matrixL, double** matrixU, int size)
 {
-  // """ LU-Factorization method using Doolittle's Method for solution of linear systems.
-  //
-  // Decomposes the matrix :math:`A` such that :math:`A = LU`.
-  //
-  // The input matrix is represented by a list or a tuple. The input matrix is **2-dimensional**, i.e. list of lists of
-  // integers and/or floats.
-  //
   // :param matrix_a: Input matrix (must be a square matrix)
   // :type matrix_a: list, tuple
   // :return: a tuple containing matrices L and U
@@ -823,13 +834,8 @@ void vtkSlicerNurbsFittingLogic::LuDecomposition(double** matrixA, double** matr
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::ForwardSubstitution(double** matrixL, double* b, int size, double* outY) // (matrix_l, matrix_b)
+void vtkSlicerNurbsFittingLogic::ForwardSubstitution(double** matrixL, double* b, int size, double* outY)
 {
-  // """ Forward substitution method for the solution of linear systems.
-  //
-  // Solves the equation :math:`Ly = b` using forward substitution method
-  // where :math:`L` is a lower triangular matrix and :math:`b` is a column matrix.
-  //
   // :param matrix_l: L, lower triangular matrix
   // :type matrix_l: list, tuple
   // :param matrix_b: b, column matrix
@@ -870,13 +876,8 @@ void vtkSlicerNurbsFittingLogic::ForwardSubstitution(double** matrixL, double* b
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* y, int size, double* outX) // (matrix_u, matrix_y)
+void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* y, int size, double* outX)
 {
-  // """ Backward substitution method for the solution of linear systems.
-  //
-  // Solves the equation :math:`Ux = y` using backward substitution method
-  // where :math:`U` is a upper triangular matrix and :math:`y` is a column matrix.
-  //
   // :param matrix_u: U, upper triangular matrix
   // :type matrix_u: list, tuple
   // :param matrix_y: y, column matrix
