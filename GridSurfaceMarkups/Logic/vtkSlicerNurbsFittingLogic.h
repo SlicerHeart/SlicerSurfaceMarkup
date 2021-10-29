@@ -75,29 +75,25 @@ public:
   /// Function computing the NURBS surface according to the pipeline architecture of VTK.
   int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
-protected:
+//protected: //TODO: FOR DEBUGGING
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void UpdateNurbsPolyData(vtkPolyData* polyData);
 
   /// Evaluate surface: compute interpolated surface points from control points and knot vectors
-  void EvaluateSurface();
+  void EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
   
   /// \brief Compute uk and vl parameter vectors from input points
-  /// 
   /// The data points array has a row size of InputResolution[0] and column size of InputResolution[1] and it is 1-dimensional.
   /// Please refer to The NURBS Book (2nd Edition), pp.366-367 for details on how to compute uk and vl arrays for global surface
   /// interpolation.
-  ///
   /// Please note that this function is not a direct implementation of Algorithm A9.3 which can be found on The NURBS Book
   /// (2nd Edition), pp.377-378. However, the output is the same.
-  ///
   /// \param ukParams Output array for uk parameters
   /// \param vkParams Output array for vl parameters
   void ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams);
   /// Compute uk parameter array for curves.
   /// Please refer to the Equations 9.4 and 9.5 for chord length parametrization, and Equation 9.6 for centripetal method
   /// on The NURBS Book (2nd Edition), pp.364-365.
-  ///
   /// \param pointIndexList: List of point IDs in \sa InputPoints defining the curve to parametrize.
   /// \param parametersArray: Output array for computed parameters.
   void ComputeParamsCurve(vtkIdList* pointIndexList, vtkDoubleArray* parametersArray);
@@ -113,12 +109,15 @@ protected:
   /// Implementation of Algorithm A2.2 from The NURBS Book by Piegl & Tiller. Uses recurrence to compute the basis functions,
   /// also known as Cox - de Boor recursion formula.
   void BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions);
+  /// TODO:
+  void BasisFunctions(int degree, vtkDoubleArray* knotVector, vtkIntArray* spans, vtkDoubleArray* knots, vtkDoubleArray* outBasisFunctions);
   /// Find the span of a single knot over the knot vector using linear search.
   /// Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
   int FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
+  /// TODO:
+  void FindSpans(int degree, vtkDoubleArray* knotVector, int numControlPoints, vtkDoubleArray* knots, vtkIntArray* outSpans);
 
   /// \brief Compute the solution to a system of linear equations.
-  //
   /// This function solves Ax = b using LU decomposition. A is a NxN matrix, b is NxM matrix of M column vectors.
   /// Each column of x is a solution for corresponding column of b.
   void LuSolve(double** coeffMatrix, int matrixSize, vtkPoints* points, vtkPoints* outControlPointsR);
@@ -130,6 +129,8 @@ protected:
   /// \brief Backward substitution method for the solution of linear systems.
   /// Solves the equation Ux = y using backward substitution method where U is a upper triangular matrix and y is a column matrix.
   void BackwardSubstitution(double** matrixU, double* y, int size, double* outX);
+  /// TODO:
+  void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* outSpace);
    
   /// Convenience function to get point index from input point list with the two (u,v) indices
   unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
@@ -150,6 +151,10 @@ protected:
   unsigned int InputResolution[2] = {4,4};
   /// Degree of the output surface for the u and v directions, respectively
   unsigned int InterpolationDegrees[2] = {3,3};
+
+  /// Evaluation delta.
+  /// Controls the number of surface points. The smaller the delta value, smoother the surface.
+  double Delta = 0.05;
 
   /// Activate centripetal parametrization method. Default: false
   bool UseCentripetal = false;

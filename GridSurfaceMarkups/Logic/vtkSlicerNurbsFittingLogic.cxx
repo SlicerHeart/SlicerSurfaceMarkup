@@ -213,15 +213,20 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
   }
   this->DestructMatrix(matrixA, this->InputResolution[1]);
 
+  //
+  // Evaluate surface
+  //
+  vtkNew<vtkPoints> evalPoints;
+  this->EvaluateSurface(uKnots, vKnots, controlPoints, evalPoints);
+
   // Fill output
   vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
   //TODO: Fill output
 
-  // Note from abstract.Surface: smaller the delta value, smoother the surface.
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::EvaluateSurface() // (self, datadict, **kwargs):
+void vtkSlicerNurbsFittingLogic::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints)
 {
   // """ Evaluates the surface.
   // 
@@ -235,13 +240,13 @@ void vtkSlicerNurbsFittingLogic::EvaluateSurface() // (self, datadict, **kwargs)
   // :rtype: list
   // """
   // # Geometry data from datadict
-  // sample_size = datadict['sample_size']
+  // sample_size = datadict['sample_size'] #CP_Note: Inverse of delta
   // degree = datadict['degree']
   // knotvector = datadict['knotvector']
   // ctrlpts = datadict['control_points']
-  // size = datadict['size']
-  // dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension']
-  // pdimension = datadict['pdimension']
+  // size = datadict['size'] #CP_Note: InputResolution
+  // dimension = datadict['dimension'] + 1 if datadict['rational'] else datadict['dimension'] #CP_Note: 3
+  // pdimension = datadict['pdimension'] #CP_Note: 2
   // precision = datadict['precision']
   // 
   // # Keyword arguments
@@ -252,6 +257,7 @@ void vtkSlicerNurbsFittingLogic::EvaluateSurface() // (self, datadict, **kwargs)
   // spans = [[] for _ in range(pdimension)]
   // basis = [[] for _ in range(pdimension)]
   // for idx in range(pdimension):
+  // #CP_Note: linalg.linspace, helpers.find_spans, helpers.basis_functions
   //     knots = linalg.linspace(start[idx], stop[idx], sample_size[idx], decimals=precision)
   //     spans[idx] = helpers.find_spans(degree[idx], knotvector[idx], size[idx], knots, self._span_func)
   //     basis[idx] = helpers.basis_functions(degree[idx], knotvector[idx], spans[idx], knots)
@@ -272,8 +278,57 @@ void vtkSlicerNurbsFittingLogic::EvaluateSurface() // (self, datadict, **kwargs)
   //         eval_points.append(spt)
   // 
   // return eval_points
-   
-  //TODO:
+
+  if (this->Delta < 0.0001)
+  {
+    vtkErrorMacro("EvaluateSurface: Delta value too small");
+    return;
+  }
+
+  double sampleSize = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+  int dimension = 3; // We only work in three dimensions
+  int pdimension = 2; // Parametric dimension
+
+  vtkNew<vtkDoubleArray> knots;
+  this->LinSpace(0.0, 1.0, sampleSize, knots); // We use uniform sampling along the u and v directions
+
+  vtkNew<vtkIntArray> uSpans;
+  vtkNew<vtkDoubleArray> uBasis;
+  this->FindSpans(this->InterpolationDegrees[0], uKnots, this->InputResolution[0], knots, uSpans);
+  this->BasisFunctions(this->InterpolationDegrees[0], uKnots, uSpans, knots, uBasis);
+
+  vtkNew<vtkIntArray> vSpans;
+  vtkNew<vtkDoubleArray> vBasis;
+  this->FindSpans(this->InterpolationDegrees[1], vKnots, this->InputResolution[1], knots, vSpans);
+  this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knots, vBasis);
+
+  outEvalPoints->Initialize();
+  for (int i=0; i<uSpans->GetNumberOfValues(); ++i)
+  {
+    int idxU = uSpans->GetValue(i) - this->InterpolationDegrees[0];
+    for (int j=0; j<vSpans->GetNumberOfValues(); ++j)
+    {
+      int idxV = vSpans->GetValue(j) - this->InterpolationDegrees[1];
+      double spt[3] = {0.0};
+      for (int k=0; k<this->InterpolationDegrees[0]+1; ++k)
+      {
+        double temp[3] = {0.0};
+        for (int l=0; l<this->InterpolationDegrees[1]+1; ++l)
+        {
+          double* controlPoint = controlPoints->GetPoint(idxV + l + (this->InputResolution[1] * (idxU + k)));
+          for (int d=0; d<dimension; ++d)
+          {
+            temp[d] = temp[d] + vBasis->GetValue(j * (this->InterpolationDegrees[1]+1) + l) * controlPoint[d];
+          }
+        }
+        for (int d=0; d<dimension; ++d)
+        {
+          spt[d] = spt[d] + uBasis->GetValue(i * (this->InterpolationDegrees[0]+1) + k) * temp[d];
+        }
+      }
+      outEvalPoints->InsertNextPoint(spt);
+    }
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -624,7 +679,7 @@ void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotV
 
   if (!outBasisFunctions)
   {
-    vtkErrorMacro("GenerateKnotVector: Invalid output array");
+    vtkErrorMacro("BasisFunction: Invalid output array");
     return;
   }
 
@@ -660,6 +715,59 @@ void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotV
 }
 
 //---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::BasisFunctions(int degree, vtkDoubleArray* knotVector, vtkIntArray* spans, vtkDoubleArray* knots, vtkDoubleArray* outBasisFunctions) // (degree, knot_vector, spans, knots)
+{
+  // """ Computes the non-vanishing basis functions for a list of parameters.
+  //
+  // Wrapper for :func:`.helpers.basis_function` to process multiple span
+  // and knot values. Uses recurrence to compute the basis functions, also
+  // known as Cox - de Boor recursion formula.
+  //
+  // :param degree: degree, :math:`p`
+  // :type degree: int
+  // :param knot_vector: knot vector, :math:`U`
+  // :type knot_vector: list, tuple
+  // :param spans: list of knot spans
+  // :type spans:  list, tuple
+  // :param knots: list of knots or parameters
+  // :type knots: list, tuple
+  // :return: basis functions
+  // :rtype: list
+  // """
+  // basis = []
+  // for span, knot in zip(spans, knots):
+  //     basis.append(basis_function(degree, knot_vector, span, knot))
+  // return basis
+
+  if (!knotVector || !spans || !knots)
+  {
+    vtkErrorMacro("BasisFunctions: Invalid input arrays");
+    return;
+  }
+  if (spans->GetNumberOfValues() != knots->GetNumberOfValues())
+  {
+    vtkErrorMacro("BasisFunctions: Spans and knots count mismatch");
+    return;
+  }
+  if (!outBasisFunctions)
+  {
+    vtkErrorMacro("BasisFunctions: Invalid output array");
+    return;
+  }
+
+  outBasisFunctions->Initialize();
+  for (int i=0; i<knots->GetNumberOfValues(); ++i)
+  {
+    vtkNew<vtkDoubleArray> currentBasisFunctions;
+    this->BasisFunction(degree, knotVector, spans->GetValue(i), knots->GetValue(i), currentBasisFunctions);
+    for (int j=0; j<currentBasisFunctions->GetNumberOfValues(); ++j)
+    {
+      outBasisFunctions->InsertNextValue(currentBasisFunctions->GetValue(j));
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
 int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot)
 {
   // :param degree: degree, :math:`p`
@@ -688,6 +796,46 @@ int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotV
   }
 
   return span - 1;
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::FindSpans(int degree, vtkDoubleArray* knotVector, int numControlPoints, vtkDoubleArray* knots, vtkIntArray* outSpans) // (degree, knot_vector, num_ctrlpts, knots, func=find_span_linear)
+{
+  // """ Finds spans of a list of knots over the knot vector.
+  //
+  // :param degree: degree, :math:`p`
+  // :type degree: int
+  // :param knot_vector: knot vector, :math:`U`
+  // :type knot_vector: list, tuple
+  // :param num_ctrlpts: number of control points, :math:`n + 1`
+  // :type num_ctrlpts: int
+  // :param knots: list of knots or parameters
+  // :type knots: list, tuple
+  // :param func: function for span finding, e.g. linear or binary search
+  // :return: list of spans
+  // :rtype: list
+  // """
+  // spans = []
+  // for knot in knots:
+  //     spans.append(func(degree, knot_vector, num_ctrlpts, knot))
+  // return spans
+  
+  if (!knotVector || !knots)
+  {
+    vtkErrorMacro("FindSpans: Invalid input arrays");
+    return;
+  }
+  if (!outSpans)
+  {
+    vtkErrorMacro("FindSpans: Invalid output array");
+    return;
+  }
+
+  outSpans->Initialize();
+  for (int i=0; i<knots->GetNumberOfValues(); ++i)
+  {
+    outSpans->InsertNextValue(this->FindSpanLinear(degree, knotVector, numControlPoints, knots->GetValue(i)));
+  }
 }
 
 //
@@ -728,8 +876,13 @@ void vtkSlicerNurbsFittingLogic::LuSolve(double** coeffMatrix, int matrixSize, v
     vtkErrorMacro("LuSolve: Invalid input coefficients matrix or points");
     return;
   }
+  if (!outControlPointsR)
+  {
+    vtkErrorMacro("LuSolve: Invalid output point array");
+    return;
+  }
 
-  int dim = 3;
+  int dim = 3; // We only work in three dimensions
   int numX = points->GetNumberOfPoints();
 
   double** matrixL = this->AllocateMatrix(matrixSize);
@@ -793,6 +946,12 @@ void vtkSlicerNurbsFittingLogic::LuDecomposition(double** matrixA, double** matr
   // return _linalg.doolittle(matrix_a)
 
   // Porting note: L and U matrices differ from the Python implementation but their product is exactly matrix A
+
+  if (!matrixA || !matrixL || !matrixU)
+  {
+    vtkErrorMacro("LuDecomposition: Invalid input matrices");
+    return;
+  }
 
   int n = size;
   double** a = matrixA;
@@ -916,6 +1075,65 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* 
     outX[i] /= matrixU[i][i];
   }
 }
+
+//---------------------------------------------------------------------------
+void vtkSlicerNurbsFittingLogic::LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* outSpace) // (start, stop, num, decimals=18)
+{
+  // """ Returns a list of evenly spaced numbers over a specified interval.
+  //
+  // Inspired from Numpy's linspace function: https://github.com/numpy/numpy/blob/master/numpy/core/function_base.py
+  //
+  // :param start: starting value
+  // :type start: float
+  // :param stop: end value
+  // :type stop: float
+  // :param num: number of samples to generate
+  // :type num: int
+  // :param decimals: number of significands
+  // :type decimals: int
+  // :return: a list of equally spaced numbers
+  // :rtype: list
+  // """
+  // start = float(start)
+  // stop = float(stop)
+  // if abs(start - stop) <= 10e-8:
+  //     return [start]
+  // num = int(num)
+  // if num > 1:
+  //     div = num - 1
+  //     delta = stop - start
+  //     return [float(("{:." + str(decimals) + "f}").format((start + (float(x) * float(delta) / float(div)))))
+  //             for x in range(num)]
+  // return [float(("{:." + str(decimals) + "f}").format(start))]
+
+  if (!outSpace)
+  {
+    vtkErrorMacro("LinSpace: Invalid output array");
+    return;
+  }
+
+  outSpace->Initialize();
+  if (fabs(start - stop) <= 1e-8)
+  {
+    outSpace->InsertNextValue(start);
+    return;
+  }
+
+  if (numOfSamples > 1)
+  {
+    int div = numOfSamples - 1;
+    double delta = stop - start;
+
+    for (int i=0; i<numOfSamples; ++i)
+    {
+      outSpace->InsertNextValue(start + (double)i * delta / div);
+    }
+  }
+}
+
+//
+// Utility functions
+//
 
 //---------------------------------------------------------------------------
 unsigned int vtkSlicerNurbsFittingLogic::GetPointIndexUV(unsigned int u, unsigned int v)
