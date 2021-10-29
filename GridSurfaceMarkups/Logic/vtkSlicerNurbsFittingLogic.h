@@ -53,29 +53,30 @@ public:
   vtkTypeMacro(vtkSlicerNurbsFittingLogic, vtkPolyDataAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  /// TODO:
+  /// Set input control points for the NURBS surface
   void SetInputPoints(vtkPoints* points);
-  /// TODO:
+  /// Get input control points
   vtkSmartPointer<vtkPoints> GetInputPoints() const { return this->InputPoints.GetPointer(); };
 
-  /// TODO:
+  /// Set resolution of the input control point grid (u x v)
   vtkSetVector2Macro(InputResolution, unsigned int);
-  /// TODO:
+  /// Get resolution of the input control point grid (u x v)
   vtkGetVector2Macro(InputResolution, unsigned int);
-  /// TODO:
+  /// Set interpolation degrees
   vtkSetVector2Macro(InterpolationDegrees, unsigned int);
-  /// TODO:
+  /// Get interpolation degrees
   vtkGetVector2Macro(InterpolationDegrees, unsigned int);
-  /// TODO:
+  /// Set flag determining whether centripetal parametrization method is used. False by default
   vtkSetMacro(UseCentripetal, bool);
+  /// Set flag determining whether centripetal parametrization method is used. False by default
   vtkBooleanMacro(UseCentripetal, bool);
-  /// TODO:
+  /// Get flag determining whether centripetal parametrization method is used. False by default
   vtkGetMacro(UseCentripetal, bool);
 
   /// Function computing the NURBS surface according to the pipeline architecture of VTK.
   int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
-//protected: //TODO: FOR DEBUGGING
+protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void UpdateNurbsPolyData(vtkPolyData* polyData);
 
@@ -109,12 +110,15 @@ public:
   /// Implementation of Algorithm A2.2 from The NURBS Book by Piegl & Tiller. Uses recurrence to compute the basis functions,
   /// also known as Cox - de Boor recursion formula.
   void BasisFunction(int degree, vtkDoubleArray* knotVector, int span, double knot, vtkDoubleArray* outBasisFunctions);
-  /// TODO:
+  /// Compute the non-vanishing basis functions for a list of parameters.
+  /// Wrapper for \sa BasisFunction to process multiple span and knot values. Uses recurrence to compute the basis functions,
+  /// also known as Cox - de Boor recursion formula.
   void BasisFunctions(int degree, vtkDoubleArray* knotVector, vtkIntArray* spans, vtkDoubleArray* knots, vtkDoubleArray* outBasisFunctions);
   /// Find the span of a single knot over the knot vector using linear search.
   /// Alternative implementation for the Algorithm A2.1 from The NURBS Book by Piegl & Tiller.
   int FindSpanLinear(int degree, vtkDoubleArray* knotVector, int numControlPoints, double knot);
-  /// TODO:
+  /// Find spans of a list of knots over the knot vector.
+  /// Wrapper for \sa FindSpanLinear to process multiple knot values.
   void FindSpans(int degree, vtkDoubleArray* knotVector, int numControlPoints, vtkDoubleArray* knots, vtkIntArray* outSpans);
 
   /// \brief Compute the solution to a system of linear equations.
@@ -129,7 +133,7 @@ public:
   /// \brief Backward substitution method for the solution of linear systems.
   /// Solves the equation Ux = y using backward substitution method where U is a upper triangular matrix and y is a column matrix.
   void BackwardSubstitution(double** matrixU, double* y, int size, double* outX);
-  /// TODO:
+  /// Return a list of evenly spaced numbers over a specified interval.
   void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* outSpace);
    
   /// Convenience function to get point index from input point list with the two (u,v) indices

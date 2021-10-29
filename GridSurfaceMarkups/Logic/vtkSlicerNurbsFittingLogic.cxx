@@ -228,12 +228,6 @@ void vtkSlicerNurbsFittingLogic::UpdateNurbsPolyData(vtkPolyData* polyData) // (
 //---------------------------------------------------------------------------
 void vtkSlicerNurbsFittingLogic::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints)
 {
-  // """ Evaluates the surface.
-  // 
-  // Keyword Arguments:
-  //     * ``start``: starting parametric position for evaluation
-  //     * ``stop``: ending parametric position for evaluation
-  // 
   // :param datadict: data dictionary containing the necessary variables
   // :type datadict: dict
   // :return: evaluated points
@@ -715,14 +709,9 @@ void vtkSlicerNurbsFittingLogic::BasisFunction(int degree, vtkDoubleArray* knotV
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::BasisFunctions(int degree, vtkDoubleArray* knotVector, vtkIntArray* spans, vtkDoubleArray* knots, vtkDoubleArray* outBasisFunctions) // (degree, knot_vector, spans, knots)
+void vtkSlicerNurbsFittingLogic::BasisFunctions(
+  int degree, vtkDoubleArray* knotVector, vtkIntArray* spans, vtkDoubleArray* knots, vtkDoubleArray* outBasisFunctions)
 {
-  // """ Computes the non-vanishing basis functions for a list of parameters.
-  //
-  // Wrapper for :func:`.helpers.basis_function` to process multiple span
-  // and knot values. Uses recurrence to compute the basis functions, also
-  // known as Cox - de Boor recursion formula.
-  //
   // :param degree: degree, :math:`p`
   // :type degree: int
   // :param knot_vector: knot vector, :math:`U`
@@ -799,10 +788,8 @@ int vtkSlicerNurbsFittingLogic::FindSpanLinear(int degree, vtkDoubleArray* knotV
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::FindSpans(int degree, vtkDoubleArray* knotVector, int numControlPoints, vtkDoubleArray* knots, vtkIntArray* outSpans) // (degree, knot_vector, num_ctrlpts, knots, func=find_span_linear)
+void vtkSlicerNurbsFittingLogic::FindSpans(int degree, vtkDoubleArray* knotVector, int numControlPoints, vtkDoubleArray* knots, vtkIntArray* outSpans)
 {
-  // """ Finds spans of a list of knots over the knot vector.
-  //
   // :param degree: degree, :math:`p`
   // :type degree: int
   // :param knot_vector: knot vector, :math:`U`
@@ -1077,12 +1064,8 @@ void vtkSlicerNurbsFittingLogic::BackwardSubstitution(double** matrixU, double* 
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerNurbsFittingLogic::LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* outSpace) // (start, stop, num, decimals=18)
+void vtkSlicerNurbsFittingLogic::LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* outSpace)
 {
-  // """ Returns a list of evenly spaced numbers over a specified interval.
-  //
-  // Inspired from Numpy's linspace function: https://github.com/numpy/numpy/blob/master/numpy/core/function_base.py
-  //
   // :param start: starting value
   // :type start: float
   // :param stop: end value
