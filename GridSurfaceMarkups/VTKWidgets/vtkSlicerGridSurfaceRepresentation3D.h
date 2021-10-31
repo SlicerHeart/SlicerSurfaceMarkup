@@ -72,7 +72,7 @@ public:
   vtkTypeMacro(vtkSlicerGridSurfaceRepresentation3D, vtkSlicerMarkupsWidgetRepresentation3D);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
-  enum InterpolatorType
+  enum InterpolatorTypes
   {
     NURBS,
     Bezier,
@@ -97,44 +97,50 @@ public:
   /// Get interpolator type
   vtkGetMacro(InterpolatorType, int);
   /// Set interpolator type
-  vtkSetMacro(InterpolatorType, int);
+  void SetInterpolatorType(int type);
 
   static const char* GetInterpolatorTypeAsString(int g);
   static int GetInterpolatorTypeFromString(const char*);
 
 protected:
-  /// NURBS surface related elements
-  ///@{
+  void UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode*);
+  void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
+
+  /// Populate \sa GridSurfaceControlPoints to contain the appropriate number of points
+  void InitializeGridSurfaceControlPoints(int resX, int resY);
+
+protected:
+  /// NURBS surface source
   vtkSmartPointer<vtkNURBSSurfaceSource> NurbsSurfaceSource;
-  //TODO:
-  ///@}
-
-  /// Bezier surface related elements
-  ///@{
+  /// Bezier surface source
   vtkSmartPointer<vtkBezierSurfaceSource> BezierSurfaceSource;
-  vtkSmartPointer<vtkPoints> BezierSurfaceControlPoints;
-  vtkSmartPointer<vtkPolyDataMapper> BezierSurfaceMapper;
-  vtkSmartPointer<vtkActor> BezierSurfaceActor;
-  vtkSmartPointer<vtkPolyDataNormals> BezierSurfaceNormals;
+
+  /// Container for the surface control points
+  ///TODO: Revise if needed
+  vtkSmartPointer<vtkPoints> GridSurfaceControlPoints;
+
+  /// Common grid surface related elements
+  ///@{
+  vtkSmartPointer<vtkPolyDataNormals> GridSurfaceNormals;
+  vtkSmartPointer<vtkPolyDataMapper> GridSurfaceMapper;
+  vtkSmartPointer<vtkActor> GridSurfaceActor;
   ///@}
 
-  // Control polygon related elements
+  /// Control polygon related elements
+  ///@{
   vtkSmartPointer<vtkPolyData> ControlPolygonPolyData;
   vtkSmartPointer<vtkTubeFilter> ControlPolygonTubeFilter;
   vtkSmartPointer<vtkPolyDataMapper> ControlPolygonMapper;
   vtkSmartPointer<vtkActor> ControlPolygonActor;
+  ///@}
 
 protected:
   /// Interpolator type. Default is NURBS.
-  int InterpolatorType = 0;
+  int InterpolatorType{0};
 
 protected:
   vtkSlicerGridSurfaceRepresentation3D();
   ~vtkSlicerGridSurfaceRepresentation3D() override;
-
-  void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
-  void UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode*);
-  void InitializeBezierSurfaceControlPoints(int resX, int resY);
 
 private:
   vtkSlicerGridSurfaceRepresentation3D(const vtkSlicerGridSurfaceRepresentation3D&) = delete;

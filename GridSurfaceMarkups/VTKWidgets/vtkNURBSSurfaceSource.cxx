@@ -259,8 +259,40 @@ void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (point
   this->EvaluateSurface(uKnots, vKnots, controlPoints, evalPoints);
 
   // Fill output
-  vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
-  //TODO: Fill output
+  polyData->SetPoints(evalPoints);
+
+  // Triangulate
+  unsigned int xRes = this->InputResolution[0];
+  unsigned int yRes = this->InputResolution[1];
+
+  vtkNew<vtkCellArray> cells;
+
+  for (unsigned int i=0; i<xRes-1; i++)
+  {
+    for (unsigned int j=0; j<yRes-1; j++)
+    {
+      unsigned int base = i*yRes + j;
+      unsigned int a = base;
+      unsigned int b = base + 1;
+      unsigned int c = base + yRes + 1;
+      unsigned int d = base + yRes;
+      vtkIdType triangle[3] = {0};
+
+      triangle[0] = c;
+      triangle[1] = b;
+      triangle[2] = a;
+      cells->InsertNextCell(3, triangle);
+
+      triangle[0] = d;
+      triangle[1] = c;
+      triangle[2] = a;
+      cells->InsertNextCell(3, triangle);
+    }
+  }
+
+  polyData->SetPolys(cells);
+
+  //TODO:
 
 }
 
