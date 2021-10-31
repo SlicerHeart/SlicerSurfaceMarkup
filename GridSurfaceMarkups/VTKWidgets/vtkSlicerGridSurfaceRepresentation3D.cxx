@@ -40,7 +40,6 @@
 #include "vtkSlicerGridSurfaceRepresentation3D.h"
 
 #include "vtkMRMLMarkupsGridSurfaceNode.h"
-#include "vtkBezierSurfaceSource.h"
 
 // MRML includes
 #include <qMRMLThreeDWidget.h>
@@ -109,7 +108,7 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller, u
     return;
   }
 
-  this->UpdateBezierSurface(gridSurfaceMarkupsNode);
+  this->UpdateGridSurface(gridSurfaceMarkupsNode);
   this->UpdateControlPolygon(gridSurfaceMarkupsNode);
 
   double diameter = (this->MarkupsDisplayNode->GetCurveLineSizeMode() == vtkMRMLMarkupsDisplayNode::UseLineDiameter ?
@@ -287,7 +286,7 @@ void vtkSlicerGridSurfaceRepresentation3D::PrintSelf(ostream& os, vtkIndent inde
 // }
 
 //-----------------------------------------------------------------------------
-void vtkSlicerGridSurfaceRepresentation3D::UpdateBezierSurface(vtkMRMLMarkupsGridSurfaceNode *node)
+void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode *node)
 {
   if (!node)
   {
@@ -370,4 +369,37 @@ void vtkSlicerGridSurfaceRepresentation3D::InitializeBezierSurfaceControlPoints(
   }
   this->BezierSurfaceControlPoints->SetNumberOfPoints(resX * resY);
   this->BezierSurfaceControlPoints->DeepCopy(planeSource->GetOutput()->GetPoints());
+}
+
+//-----------------------------------------------------------
+int vtkSlicerGridSurfaceRepresentation3D::GetInterpolatorTypeFromString(const char* name)
+{
+  if (name == nullptr)
+  {
+    // invalid name
+    return -1;
+  }
+  for (int ii = 0; ii < InterpolatorType_Last; ii++)
+  {
+    if (strcmp(name, GetInterpolatorTypeAsString(ii)) == 0)
+    {
+      // found a matching name
+      return ii;
+    }
+  }
+  // unknown name
+  return -1;
+}
+
+//---------------------------------------------------------------------------
+const char* vtkSlicerGridSurfaceRepresentation3D::GetInterpolatorTypeAsString(int id)
+{
+  switch (id)
+  {
+  case NURBS: return "NURBS";
+  case Bezier: return "Bezier";
+  default:
+    // invalid id
+    return "Invalid";
+  }
 }
