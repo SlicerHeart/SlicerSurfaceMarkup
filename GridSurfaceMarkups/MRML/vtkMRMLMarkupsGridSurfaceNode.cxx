@@ -61,7 +61,7 @@ vtkMRMLMarkupsGridSurfaceNode::vtkMRMLMarkupsGridSurfaceNode()
   :Superclass()
 {
   this->RequiredNumberOfControlPoints = NUMBER_OF_PLANE_CONTROL_POINTS;
-  this->MaximumNumberOfControlPoints = 0;
+  this->MaximumNumberOfControlPoints = -1;
 
   this->CurveInputPoly->GetPoints()->AddObserver(vtkCommand::ModifiedEvent, this->MRMLCallbackCommand);
 
