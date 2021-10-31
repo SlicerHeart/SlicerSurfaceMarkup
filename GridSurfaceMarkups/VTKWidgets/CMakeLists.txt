@@ -20,6 +20,8 @@ set(${KIT}_SRCS
   vtkSlicerGridSurfaceRepresentation2D.cxx
   vtkBezierSurfaceSource.h
   vtkBezierSurfaceSource.cxx
+  vtkNURBSSurfaceSource.h
+  vtkNURBSSurfaceSource.cxx
   )
 
 set(${KIT}_TARGET_LIBRARIES

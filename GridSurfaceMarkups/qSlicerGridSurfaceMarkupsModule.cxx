@@ -163,9 +163,9 @@ void qSlicerGridSurfaceMarkupsModule::setup()
   }
 
   // Register markups
-  vtkNew<vtkMRMLMarkupsGridSurfaceNode> bezierSurfaceNode;
-  vtkNew<vtkSlicerGridSurfaceWidget> bezierSurfaceWidget;
-  markupsLogic->RegisterMarkupsNode(bezierSurfaceNode, bezierSurfaceWidget);
+  vtkNew<vtkMRMLMarkupsGridSurfaceNode> gridSurfaceNode;
+  vtkNew<vtkSlicerGridSurfaceWidget> gridSurfaceWidget;
+  markupsLogic->RegisterMarkupsNode(gridSurfaceNode, gridSurfaceWidget);
 
   // Create and configure the additional widgets
   auto optionsWidgetFactory = qSlicerMarkupsAdditionalOptionsWidgetsFactory::instance();
@@ -187,7 +187,7 @@ vtkMRMLAbstractLogic* qSlicerGridSurfaceMarkupsModule::createLogic()
 //-----------------------------------------------------------------------------
 QStringList qSlicerGridSurfaceMarkupsModule::associatedNodeTypes() const
 {
-  return QStringList() << "vtkMRMLMarkupsBezierSurfaceNode";
+  return QStringList() << "vtkMRMLMarkupsGridSurfaceNode";
 }
 
 //-----------------------------------------------------------------------------

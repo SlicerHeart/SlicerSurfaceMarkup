@@ -90,14 +90,14 @@ void vtkMRMLMarkupsGridSurfaceNode::ProcessMRMLEvents(vtkObject* caller, unsigne
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLMarkupsGridSurfaceNode::SetGridSurfaceType(int roiType)
+void vtkMRMLMarkupsGridSurfaceNode::SetGridSurfaceType(int gridSurfaceType)
 {
-  if (this->GridSurfaceType == roiType)
+  if (this->GridSurfaceType == gridSurfaceType)
   {
     return;
   }
 
-  this->GridSurfaceType = roiType;
+  this->GridSurfaceType = gridSurfaceType;
 
   this->UpdateGridSurfaceFromControlPoints();
   this->Modified();
@@ -108,14 +108,16 @@ const char* vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(int gridSu
 {
   switch (gridSurfaceType)
   {
-  case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeBezier:
+  case vtkMRMLMarkupsGridSurfaceNode::NURBS:
+    return "NURBS";
+  case vtkMRMLMarkupsGridSurfaceNode::Bezier:
     return "Bezier";
-    //case vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeThinPlate:
+    //case vtkMRMLMarkupsGridSurfaceNode::ThinPlate:
     //  return "ThinPlate";
   default:
-    break;
+    // invalid id
+    return "Invalid";
   }
-  return "";
 }
 
 //-----------------------------------------------------------

@@ -48,7 +48,7 @@ class vtkFloatArray;
 
 //------------------------------------------------------------------------------
 /**
- * \ingroup ResectionPlanning
+ * \ingroup GridSurfaceMarkups
  *
  * \brief This class generates the geometry of a Bézier surface
  * of degree \f$m+1\times n+1\f$ where \f$m\f$ and \f$n\f$ are number of control

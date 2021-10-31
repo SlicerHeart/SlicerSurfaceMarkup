@@ -42,6 +42,9 @@
 
 #include "vtkSlicerGridSurfaceMarkupsModuleVTKWidgetsExport.h"
 
+#include "vtkBezierSurfaceSource.h"
+#include "vtkNURBSSurfaceSource.h"
+
 // Markups VTKWidgets includes
 #include "vtkSlicerMarkupsWidgetRepresentation3D.h"
 
@@ -56,7 +59,7 @@
 class vtkBezierSurfaceSource;
 class vtkPolyData;
 class vtkPolyDataNormals;
-class vtkPoints;
+class vtkPointSet;
 class vtkTubeFilter;
 class vtkMRMLMarkupsGridSurfaceNode;
 
@@ -72,37 +75,59 @@ public:
   void UpdateFromMRML(vtkMRMLNode* caller, unsigned long event, void* callData=nullptr) override;
 
   /// Methods to make this class behave as a vtkProp.
+  ///@{
   void GetActors(vtkPropCollection *) override;
   void ReleaseGraphicsResources(vtkWindow *) override;
   int RenderOverlay(vtkViewport *viewport) override;
   int RenderOpaqueGeometry(vtkViewport *viewport) override;
   int RenderTranslucentPolygonalGeometry(vtkViewport *viewport) override;
   vtkTypeBool HasTranslucentPolygonalGeometry() override;
+  ///@}
 
   /// Return the bounds of the representation
-  double *GetBounds() override;
+  double* GetBounds() override;
+
+  /// Connect the appropriate interpolator algorithm if input is available.
+  /// Also connect/disconnect the whole pipeline to prevent invalid input connection errors.
+  void UpdateInterpolatorConnection();
 
 protected:
-  // Bezier surface related elements
-  vtkSmartPointer<vtkBezierSurfaceSource> BezierSurfaceSource;
-  vtkSmartPointer<vtkPoints> BezierSurfaceControlPoints;
-  vtkSmartPointer<vtkPolyDataMapper> BezierSurfaceMapper;
-  vtkSmartPointer<vtkActor> BezierSurfaceActor;
-  vtkSmartPointer<vtkPolyDataNormals> BezierSurfaceNormals;
+  void UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode*);
+  void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
 
-  // Control polygon related elements
-  vtkSmartPointer<vtkPolyData> ControlPolygonPolyData;
-  vtkSmartPointer<vtkTubeFilter> ControlPolygonTubeFilter;
-  vtkSmartPointer<vtkPolyDataMapper> ControlPolygonMapper;
-  vtkSmartPointer<vtkActor> ControlPolygonActor;
+  // Update visibility of interaction handles for representation
+  void UpdateInteractionPipeline() override;
+
+  /// Populate \sa GridSurfaceControlPoints to contain the appropriate number of points
+  void InitializeGridSurfaceControlPoints(int resX, int resY);
+
+protected:
+  /// NURBS surface source
+  vtkNew<vtkNURBSSurfaceSource> NurbsSurfaceSource;
+  /// Bezier surface source
+  vtkNew<vtkBezierSurfaceSource> BezierSurfaceSource;
+
+  /// Container for the surface control points
+  vtkNew<vtkPointSet> GridSurfaceControlPointSet;
+
+  /// Common grid surface related elements
+  ///@{
+  vtkNew<vtkPolyDataNormals> GridSurfaceNormals;
+  vtkNew<vtkPolyDataMapper> GridSurfaceMapper;
+  vtkNew<vtkActor> GridSurfaceActor;
+  ///@}
+
+  /// Control polygon related elements
+  ///@{
+  vtkNew<vtkPolyData> ControlPolygonPolyData;
+  vtkNew<vtkTubeFilter> ControlPolygonTubeFilter;
+  vtkNew<vtkPolyDataMapper> ControlPolygonMapper;
+  vtkNew<vtkActor> ControlPolygonActor;
+  ///@}
 
 protected:
   vtkSlicerGridSurfaceRepresentation3D();
   ~vtkSlicerGridSurfaceRepresentation3D() override;
-
-  void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
-  void UpdateBezierSurface(vtkMRMLMarkupsGridSurfaceNode*);
-  void InitializeBezierSurfaceControlPoints(int resX, int resY);
 
 private:
   vtkSlicerGridSurfaceRepresentation3D(const vtkSlicerGridSurfaceRepresentation3D&) = delete;

@@ -86,8 +86,9 @@ public:
   // GridSurface type enum defines the calculation to create the surface from the control points
   enum
     {
-    GridSurfaceTypeBezier,
-    //GridSurfaceTypeThinPlate,
+    NURBS,
+    Bezier,
+    //ThinPlate,
     GridSurfaceType_Last
     };
 
@@ -111,7 +112,7 @@ public:
   void UpdateControlPointsFromGridSurface();
 
 protected:
-  int GridSurfaceType{vtkMRMLMarkupsGridSurfaceNode::GridSurfaceTypeBezier};
+  int GridSurfaceType{vtkMRMLMarkupsGridSurfaceNode::NURBS};
 
   bool IsUpdatingControlPointsFromGridSurface{false};
   bool IsUpdatingGridSurfaceFromControlPoints{false};
