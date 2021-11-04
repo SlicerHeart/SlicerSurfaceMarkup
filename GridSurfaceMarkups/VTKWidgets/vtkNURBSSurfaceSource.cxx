@@ -54,8 +54,7 @@ vtkStandardNewMacro(vtkNURBSSurfaceSource);
 //-------------------------------------------------------------------------------
 vtkNURBSSurfaceSource::vtkNURBSSurfaceSource()
 {
-  // this->SetNumberOfInputPorts(0);
-  // this->SetNumberOfOutputPorts(1);
+  this->SetNumberOfInputPorts(1);
 }
 
 //-------------------------------------------------------------------------------
@@ -116,35 +115,54 @@ void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
 // }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::SetInputPoints(vtkPoints* points)
-{
-  if (this->InputPoints == points)
-  {
-    return;
-  }
+//void vtkNURBSSurfaceSource::SetInputPoints(vtkPoints* points)
+//{
+//  if (this->InputPoints == points)
+//  {
+//    return;
+//  }
+//
+//  this->InputPoints = points;
+//  this->Modified();
+//}
 
-  this->InputPoints = points;
-  this->Modified();
+//----------------------------------------------------------------------------
+int vtkNURBSSurfaceSource::FillInputPortInformation(int port, vtkInformation* info)
+{
+  if (port == 0)
+    {
+    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPointSet");
+    }
+  else
+    {
+    vtkErrorMacro("Cannot set input info for port " << port);
+    return 0;
+    }
+
+  return 1;
 }
 
 //-------------------------------------------------------------------------------
 int vtkNURBSSurfaceSource::RequestData(
-  vtkInformation* vtkNotUsed(request), vtkInformationVector** vtkNotUsed(inputVector), vtkInformationVector* outputVector)
+  vtkInformation* vtkNotUsed(request), vtkInformationVector** inputVector, vtkInformationVector* outputVector)
 {
-  vtkInformation* bezierSurfaceOutputInfo = outputVector->GetInformationObject(0);
-  if (bezierSurfaceOutputInfo)
+  vtkInformation* inInfo = inputVector[0]->GetInformationObject(0);
+  vtkPointSet* inputPointSet = vtkPointSet::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
+  if (!inputPointSet)
   {
-    vtkPolyData* nurbsSurfaceOutput =
-      vtkPolyData::SafeDownCast(bezierSurfaceOutputInfo->Get(vtkDataObject::DATA_OBJECT()));
-    this->UpdateNurbsPolyData(nurbsSurfaceOutput);
-    //nurbsSurfaceOutput->SetPolys(this->Topology);
+    return 1;
   }
+
+  vtkInformation* outInfo = outputVector->GetInformationObject(0);
+  vtkPolyData* outputPolyData = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
+
+  this->ComputeNurbsPolyData(inputPointSet->GetPoints(), outputPolyData);
 
   return 1;
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (points, size_u, size_v, degree_u, degree_v, **kwargs)
+void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPolyData* outputPolyData) // (points, size_u, size_v, degree_u, degree_v, **kwargs)
 {
   // # Keyword arguments
   // use_centripetal = kwargs.get('centripetal', False)
@@ -183,12 +201,12 @@ void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (point
   //
   // return surf
 
-  if (polyData == nullptr)
+  if (outputPolyData == nullptr)
   {
     return;
   }
 
-  if (!this->InputPoints)
+  if (!inputPoints)
   {
     vtkErrorMacro("UpdateNurbsPolyData: No valid input point list is set");
     return;
@@ -199,10 +217,17 @@ void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (point
     return;
   }
 
+//TODO:
+//std::cout << "ZZZ Input points\n";
+//for (int i=0; i<inputPoints->GetNumberOfPoints(); ++i)
+//{
+//std::cout << "ZZZ " << i << ": (" << inputPoints->GetPoint(i)[0] << ", " << inputPoints->GetPoint(i)[1] << ", " << inputPoints->GetPoint(i)[2] << ")\n";
+//}
+
   // Get parameter arrays in the two directions
   vtkNew<vtkDoubleArray> ukParams;
   vtkNew<vtkDoubleArray> vlParams;
-  this->ComputeParamsSurface(ukParams, vlParams);
+  this->ComputeParamsSurface(inputPoints, ukParams, vlParams);
 
   // Compute knot vectors
   vtkNew<vtkDoubleArray> uKnots;
@@ -221,7 +246,7 @@ void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (point
     vtkNew<vtkPoints> points;
     for (int u=0; u<this->InputResolution[0]; ++u)
     {
-      points->InsertNextPoint(this->InputPoints->GetPoint(this->GetPointIndexUV(u,v)));
+      points->InsertNextPoint(inputPoints->GetPoint(this->GetPointIndexUV(u,v)));
     }
 
     this->BuildCoeffMatrix(this->InterpolationDegrees[0], uKnots, ukParams, points, matrixA);
@@ -258,24 +283,30 @@ void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (point
   vtkNew<vtkPoints> evalPoints;
   this->EvaluateSurface(uKnots, vKnots, controlPoints, evalPoints);
 
+//std::cout << "ZZZ Output points\n";
+//for (int i=0; i<evalPoints->GetNumberOfPoints(); ++i)
+//{
+//std::cout << "ZZZ " << i << ": (" << evalPoints->GetPoint(i)[0] << ", " << evalPoints->GetPoint(i)[1] << ", " << evalPoints->GetPoint(i)[2] << ")\n";
+//}
+
   // Fill output
-  polyData->SetPoints(evalPoints);
+  outputPolyData->SetPoints(evalPoints);
 
   // Triangulate
-  unsigned int xRes = this->InputResolution[0];
-  unsigned int yRes = this->InputResolution[1];
+  int sampleSizeU = 0, sampliSizeV = 0;
+  this->CalculateSampleSize(sampleSizeU, sampliSizeV);
 
   vtkNew<vtkCellArray> cells;
 
-  for (unsigned int i=0; i<xRes-1; i++)
+  for (unsigned int i=0; i<sampleSizeU-1; i++)
   {
-    for (unsigned int j=0; j<yRes-1; j++)
+    for (unsigned int j=0; j<sampliSizeV-1; j++)
     {
-      unsigned int base = i*yRes + j;
+      unsigned int base = i*sampliSizeV + j;
       unsigned int a = base;
       unsigned int b = base + 1;
-      unsigned int c = base + yRes + 1;
-      unsigned int d = base + yRes;
+      unsigned int c = base + sampliSizeV + 1;
+      unsigned int d = base + sampliSizeV;
       vtkIdType triangle[3] = {0};
 
       triangle[0] = c;
@@ -290,9 +321,9 @@ void vtkNURBSSurfaceSource::UpdateNurbsPolyData(vtkPolyData* polyData) // (point
     }
   }
 
-  polyData->SetPolys(cells);
+  outputPolyData->SetPolys(cells);
 
-  //TODO:
+  //TODO: Triangulate is from Bezier. Works?
 
 }
 
@@ -344,18 +375,20 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   //
   // return eval_points
 
-  if (this->Delta < 0.0001)
+  if (this->Delta < 0.0001) //TODO: Change if delta meaning changes?
   {
     vtkErrorMacro("EvaluateSurface: Delta value too small");
     return;
   }
 
-  double sampleSize = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+  int sampleSizeU = 0, sampliSizeV = 0;
+  this->CalculateSampleSize(sampleSizeU, sampliSizeV);
   int dimension = 3; // We only work in three dimensions
   int pdimension = 2; // Parametric dimension
 
   vtkNew<vtkDoubleArray> knots;
-  this->LinSpace(0.0, 1.0, sampleSize, knots); // We use uniform sampling along the u and v directions
+  //TODO: Two knots for the two sample sizes?
+  this->LinSpace(0.0, 1.0, sampleSizeU, knots); // We use uniform sampling along the u and v directions
 
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;
@@ -397,7 +430,7 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams)
+void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkPoints* inputPoints, vtkDoubleArray* ukParams, vtkDoubleArray* vlParams)
 {
   // :param points: data points
   // :type points: list, tuple
@@ -455,7 +488,7 @@ void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDo
     }
 
     // Compute parameters for column
-    this->ComputeParamsCurve(columnIds, ukParamsTemp);
+    this->ComputeParamsCurve(inputPoints, columnIds, ukParamsTemp);
   }
 
   // Do averaging on the u direction
@@ -482,7 +515,7 @@ void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDo
     }
 
     // Compute parameters for row
-    this->ComputeParamsCurve(rowIds, vlParamsTemp);
+    this->ComputeParamsCurve(inputPoints, rowIds, vlParamsTemp);
   }
 
   // Do averaging on the v direction
@@ -500,7 +533,7 @@ void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDo
 
 //---------------------------------------------------------------------------
 void vtkNURBSSurfaceSource::ComputeParamsCurve(
-  vtkIdList* pointIndexList, vtkDoubleArray* outParametersArray)
+  vtkPoints* inputPoints, vtkIdList* pointIndexList, vtkDoubleArray* outParametersArray)
 {
   // :param points: data points
   // :type points: list, tuple
@@ -547,8 +580,8 @@ void vtkNURBSSurfaceSource::ComputeParamsCurve(
   double sumAllChordLengths = 0.0;
   for (int i=1; i<pointIndexList->GetNumberOfIds(); ++i)
   {
-    this->InputPoints->GetPoint(pointIndexList->GetId(i-1), prevPoint);
-    this->InputPoints->GetPoint(pointIndexList->GetId(i), currentPoint);
+    inputPoints->GetPoint(pointIndexList->GetId(i-1), prevPoint);
+    inputPoints->GetPoint(pointIndexList->GetId(i), currentPoint);
     double distance = sqrt(vtkMath::Distance2BetweenPoints(currentPoint, prevPoint));
     double chordLength = this->UseCentripetal ? sqrt(distance) : distance;
     chordLengthsArray->InsertNextValue(chordLength);
@@ -1229,4 +1262,13 @@ void vtkNURBSSurfaceSource::DestructMatrix(double** matrix, int m, int n/*=0*/)
     delete[] matrix[i];
   }
   delete[] matrix;
+}
+
+//---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSizeV)
+{
+  int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+  //TODO: Make a multiplied of input resolution. Decrease default delta?
+  sampleSizeU = samplesPerGridCell;
+  sampleSizeV = samplesPerGridCell;
 }

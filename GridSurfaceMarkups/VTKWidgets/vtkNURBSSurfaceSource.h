@@ -43,7 +43,6 @@
 
 // VTK includes
 #include <vtkPolyDataAlgorithm.h>
-// #include <vtkSmartPointer.h>
 
 class vtkDoubleArray;
 class vtkIdList;
@@ -64,9 +63,9 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   void PrintSelf(ostream &os, vtkIndent indent);
 
   /// Set input control points for the NURBS surface
-  void SetInputPoints(vtkPoints* points);
+  //void SetInputPoints(vtkPoints* points);
   /// Get input control points
-  vtkSmartPointer<vtkPoints> GetInputPoints() const { return this->InputPoints.GetPointer(); };
+  //vtkSmartPointer<vtkPoints> GetInputPoints() const { return this->InputPoints.GetPointer(); };
 
   /// Set resolution of the input control point grid (u x v)
   vtkSetVector2Macro(InputResolution, unsigned int);
@@ -83,12 +82,9 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   /// Get flag determining whether centripetal parametrization method is used. False by default
   vtkGetMacro(UseCentripetal, bool);
 
-  /// Function computing the NURBS surface according to the pipeline architecture of VTK.
-  int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
-
 protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
-  void UpdateNurbsPolyData(vtkPolyData* polyData);
+  void ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPolyData* outputPolyData);
 
   /// Evaluate surface: compute interpolated surface points from control points and knot vectors
   void EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
@@ -101,13 +97,14 @@ protected:
   /// (2nd Edition), pp.377-378. However, the output is the same.
   /// \param ukParams Output array for uk parameters
   /// \param vkParams Output array for vl parameters
-  void ComputeParamsSurface(vtkDoubleArray* ukParams, vtkDoubleArray* vlParams);
+  void ComputeParamsSurface(vtkPoints* inputPoints, vtkDoubleArray* ukParams, vtkDoubleArray* vlParams);
   /// Compute uk parameter array for curves.
   /// Please refer to the Equations 9.4 and 9.5 for chord length parametrization, and Equation 9.6 for centripetal method
   /// on The NURBS Book (2nd Edition), pp.364-365.
-  /// \param pointIndexList: List of point IDs in \sa InputPoints defining the curve to parametrize.
+  /// \param inputPoints: Input points.
+  /// \param pointIndexList: List of point IDs in \sa inputPoints defining the curve to parametrize.
   /// \param parametersArray: Output array for computed parameters.
-  void ComputeParamsCurve(vtkIdList* pointIndexList, vtkDoubleArray* parametersArray);
+  void ComputeParamsCurve(vtkPoints* inputPoints, vtkIdList* pointIndexList, vtkDoubleArray* parametersArray);
   /// Compute a knot vector from the parameter list using averaging method.
   /// Please refer to the Equation 9.8 on The NURBS Book (2nd Edition), pp.365 for details.
   void ComputeKnotVector(int degree, int numOfPoints, vtkDoubleArray* params, vtkDoubleArray* outKnotVector);
@@ -156,10 +153,16 @@ protected:
   /// \param m Number of rows
   /// \param n Number of columns. If omitted it is considered a square mxm matrix
   void DestructMatrix(double** matrix, int m, int n=0);
+  /// Calculate sample size as a function of \sa Delta
+  void CalculateSampleSize(int& sampleSizeU, int& sampleSizeV);
+
+protected:
+  int FillInputPortInformation(int port, vtkInformation* info) override;
+  int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
 protected:
   /// Input control points. The number of points is u*v, and the strides contain the rows (0:[0,0], 1:[0,1], ...)
-  vtkSmartPointer<vtkPoints> InputPoints;
+  //vtkSmartPointer<vtkPoints> InputPoints;
 
   /// Number of input control points along the u and v directions, respectively
   unsigned int InputResolution[2] = {4,4};

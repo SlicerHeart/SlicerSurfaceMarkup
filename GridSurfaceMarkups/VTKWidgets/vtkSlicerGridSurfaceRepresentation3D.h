@@ -59,7 +59,7 @@
 class vtkBezierSurfaceSource;
 class vtkPolyData;
 class vtkPolyDataNormals;
-class vtkPoints;
+class vtkPointSet;
 class vtkTubeFilter;
 class vtkMRMLMarkupsGridSurfaceNode;
 
@@ -106,32 +106,34 @@ protected:
   void UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode*);
   void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
 
+  // Update visibility of interaction handles for representation
+  void UpdateInteractionPipeline() override;
+
   /// Populate \sa GridSurfaceControlPoints to contain the appropriate number of points
   void InitializeGridSurfaceControlPoints(int resX, int resY);
 
 protected:
   /// NURBS surface source
-  vtkSmartPointer<vtkNURBSSurfaceSource> NurbsSurfaceSource;
+  vtkNew<vtkNURBSSurfaceSource> NurbsSurfaceSource;
   /// Bezier surface source
-  vtkSmartPointer<vtkBezierSurfaceSource> BezierSurfaceSource;
+  vtkNew<vtkBezierSurfaceSource> BezierSurfaceSource;
 
   /// Container for the surface control points
-  ///TODO: Revise if needed
-  vtkSmartPointer<vtkPoints> GridSurfaceControlPoints;
+  vtkNew<vtkPointSet> GridSurfaceControlPointSet;
 
   /// Common grid surface related elements
   ///@{
-  vtkSmartPointer<vtkPolyDataNormals> GridSurfaceNormals;
-  vtkSmartPointer<vtkPolyDataMapper> GridSurfaceMapper;
-  vtkSmartPointer<vtkActor> GridSurfaceActor;
+  vtkNew<vtkPolyDataNormals> GridSurfaceNormals;
+  vtkNew<vtkPolyDataMapper> GridSurfaceMapper;
+  vtkNew<vtkActor> GridSurfaceActor;
   ///@}
 
   /// Control polygon related elements
   ///@{
-  vtkSmartPointer<vtkPolyData> ControlPolygonPolyData;
-  vtkSmartPointer<vtkTubeFilter> ControlPolygonTubeFilter;
-  vtkSmartPointer<vtkPolyDataMapper> ControlPolygonMapper;
-  vtkSmartPointer<vtkActor> ControlPolygonActor;
+  vtkNew<vtkPolyData> ControlPolygonPolyData;
+  vtkNew<vtkTubeFilter> ControlPolygonTubeFilter;
+  vtkNew<vtkPolyDataMapper> ControlPolygonMapper;
+  vtkNew<vtkActor> ControlPolygonActor;
   ///@}
 
 protected:
