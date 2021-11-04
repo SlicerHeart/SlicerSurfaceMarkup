@@ -82,50 +82,6 @@ void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
   os << "Use centripetal: " << this->UseCentripetal << "\n";
 }
 
-//-------------------------------------------------------------------------------
-// void vtkNURBSSurfaceSource::UpdateTopology()
-// {
-//   unsigned int xRes = this->Resolution[0];
-//   unsigned int yRes = this->Resolution[1];
-
-//   this->Topology = vtkSmartPointer<vtkCellArray>::New();
-
-//   for (unsigned int i=0; i<xRes-1; i++)
-//   {
-//     for (unsigned int j=0; j<yRes-1; j++)
-//     {
-//       unsigned int base = i*yRes + j;
-//       unsigned int a = base;
-//       unsigned int b = base + 1;
-//       unsigned int c = base + yRes + 1;
-//       unsigned int d = base + yRes;
-//       vtkIdType triangle[3] = {0};
-
-//       triangle[0] = c;
-//       triangle[1] = b;
-//       triangle[2] = a;
-//       Topology->InsertNextCell(3, triangle);
-
-//       triangle[0] = d;
-//       triangle[1] = c;
-//       triangle[2] = a;
-//       Topology->InsertNextCell(3, triangle);
-//     }
-//   }
-// }
-
-//---------------------------------------------------------------------------
-//void vtkNURBSSurfaceSource::SetInputPoints(vtkPoints* points)
-//{
-//  if (this->InputPoints == points)
-//  {
-//    return;
-//  }
-//
-//  this->InputPoints = points;
-//  this->Modified();
-//}
-
 //----------------------------------------------------------------------------
 int vtkNURBSSurfaceSource::FillInputPortInformation(int port, vtkInformation* info)
 {
@@ -217,13 +173,6 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
     return;
   }
 
-//TODO:
-//std::cout << "ZZZ Input points\n";
-//for (int i=0; i<inputPoints->GetNumberOfPoints(); ++i)
-//{
-//std::cout << "ZZZ " << i << ": (" << inputPoints->GetPoint(i)[0] << ", " << inputPoints->GetPoint(i)[1] << ", " << inputPoints->GetPoint(i)[2] << ")\n";
-//}
-
   // Get parameter arrays in the two directions
   vtkNew<vtkDoubleArray> ukParams;
   vtkNew<vtkDoubleArray> vlParams;
@@ -283,12 +232,6 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   vtkNew<vtkPoints> evalPoints;
   this->EvaluateSurface(uKnots, vKnots, controlPoints, evalPoints);
 
-//std::cout << "ZZZ Output points\n";
-//for (int i=0; i<evalPoints->GetNumberOfPoints(); ++i)
-//{
-//std::cout << "ZZZ " << i << ": (" << evalPoints->GetPoint(i)[0] << ", " << evalPoints->GetPoint(i)[1] << ", " << evalPoints->GetPoint(i)[2] << ")\n";
-//}
-
   // Fill output
   outputPolyData->SetPoints(evalPoints);
 
@@ -322,9 +265,6 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   }
 
   outputPolyData->SetPolys(cells);
-
-  //TODO: Triangulate is from Bezier. Works?
-
 }
 
 //---------------------------------------------------------------------------

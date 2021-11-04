@@ -62,11 +62,6 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   vtkTypeMacro(vtkNURBSSurfaceSource, vtkPolyDataAlgorithm);
   void PrintSelf(ostream &os, vtkIndent indent);
 
-  /// Set input control points for the NURBS surface
-  //void SetInputPoints(vtkPoints* points);
-  /// Get input control points
-  //vtkSmartPointer<vtkPoints> GetInputPoints() const { return this->InputPoints.GetPointer(); };
-
   /// Set resolution of the input control point grid (u x v)
   vtkSetVector2Macro(InputResolution, unsigned int);
   /// Get resolution of the input control point grid (u x v)
@@ -161,9 +156,6 @@ protected:
   int RequestData(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
 protected:
-  /// Input control points. The number of points is u*v, and the strides contain the rows (0:[0,0], 1:[0,1], ...)
-  //vtkSmartPointer<vtkPoints> InputPoints;
-
   /// Number of input control points along the u and v directions, respectively
   unsigned int InputResolution[2] = {4,4};
   /// Degree of the output surface for the u and v directions, respectively
@@ -184,9 +176,6 @@ protected:
  private:
   vtkNURBSSurfaceSource(const vtkNURBSSurfaceSource&);  // Not implemented.
   void operator=(const vtkNURBSSurfaceSource&);  // Not implemented.
-
-  // vtkSmartPointer<vtkDoubleArray> DataArray;
-  // vtkSmartPointer<vtkCellArray> Topology;
 };
 
 #endif // __vtkNURBSSurfaceSource_h

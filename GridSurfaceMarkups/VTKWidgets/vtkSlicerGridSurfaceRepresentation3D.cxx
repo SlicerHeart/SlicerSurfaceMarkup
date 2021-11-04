@@ -67,13 +67,6 @@ vtkStandardNewMacro(vtkSlicerGridSurfaceRepresentation3D);
 vtkSlicerGridSurfaceRepresentation3D::vtkSlicerGridSurfaceRepresentation3D()
   : Superclass()
 {
-  this->InitializeGridSurfaceControlPoints(4, 4);
-
-  this->GridSurfaceNormals->SetInputConnection(this->NurbsSurfaceSource->GetOutputPort());
-
-  this->GridSurfaceMapper->SetInputConnection(this->GridSurfaceNormals->GetOutputPort());
-  this->GridSurfaceActor->SetMapper(this->GridSurfaceMapper);
-
   this->ControlPolygonTubeFilter->SetInputData(this->ControlPolygonPolyData.GetPointer());
   this->ControlPolygonTubeFilter->SetRadius(1);
   this->ControlPolygonTubeFilter->SetNumberOfSides(20);
@@ -82,8 +75,7 @@ vtkSlicerGridSurfaceRepresentation3D::vtkSlicerGridSurfaceRepresentation3D()
 
   this->ControlPolygonActor->SetMapper(this->ControlPolygonMapper);
 
-//TODO: FOR DEBUGGING
-//this->SetInterpolatorType(Bezier);
+  this->UpdateInterpolatorConnection();
 }
 
 //------------------------------------------------------------------------------
@@ -310,6 +302,22 @@ void vtkSlicerGridSurfaceRepresentation3D::SetInterpolatorType(int type)
 
   this->InterpolatorType = type;
 
+  this->UpdateInterpolatorConnection();
+
+  this->Modified();
+}
+
+//-----------------------------------------------------------------------------
+void vtkSlicerGridSurfaceRepresentation3D::UpdateInterpolatorConnection()
+{
+  if (!this->GridSurfaceControlPointSet->GetNumberOfPoints())
+  {
+    this->GridSurfaceNormals->SetInputConnection(nullptr);
+    this->GridSurfaceMapper->SetInputConnection(nullptr);
+    this->GridSurfaceActor->SetMapper(nullptr);
+    return;
+  }
+
   switch (this->InterpolatorType)
   {
   case NURBS:
@@ -322,7 +330,8 @@ void vtkSlicerGridSurfaceRepresentation3D::SetInterpolatorType(int type)
     vtkErrorMacro("SetInterpolatorType: Invalid interpolator type");
   }
 
-  this->Modified();
+  this->GridSurfaceMapper->SetInputConnection(this->GridSurfaceNormals->GetOutputPort());
+  this->GridSurfaceActor->SetMapper(this->GridSurfaceMapper);
 }
 
 //-----------------------------------------------------------------------------
@@ -352,13 +361,21 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
     return;
   }
 
-  // Change internal grid if grid resolution has changed
   int gridResolution[2] = {0};
   node->GetGridResolution(gridResolution);
-  if ( gridResolution[0] != this->BezierSurfaceSource->GetNumberOfControlPointsX()
-    || gridResolution[1] != this->BezierSurfaceSource->GetNumberOfControlPointsY() )
+  if (node->GetNumberOfDefinedControlPoints() < gridResolution[0] * gridResolution[0])
+  {
+    // Do not calculate surface while plane control points are being defined
+    this->NurbsSurfaceSource->SetInputResolution(0,0); //TODO: Use a different way to detect changes in resolution
+    return;
+  }
+
+  // Change internal grid if grid resolution has changed
+  if ( gridResolution[0] != this->NurbsSurfaceSource->GetInputResolution()[0]
+    || gridResolution[1] != this->NurbsSurfaceSource->GetInputResolution()[1] )
   {
     this->InitializeGridSurfaceControlPoints(gridResolution[0], gridResolution[1]);
+    this->UpdateInterpolatorConnection();
 
     this->BezierSurfaceSource->SetNumberOfControlPoints(gridResolution[0], gridResolution[1]);
     this->BezierSurfaceSource->SetResolution(gridResolution[0] * 3, gridResolution[1] * 3);

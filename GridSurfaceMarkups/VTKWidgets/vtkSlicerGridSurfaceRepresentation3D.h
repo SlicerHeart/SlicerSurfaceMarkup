@@ -99,6 +99,9 @@ public:
   /// Set interpolator type
   void SetInterpolatorType(int type);
 
+  /// Connect the appropriate interpolator algorithm if input is available.
+  void UpdateInterpolatorConnection();
+
   static const char* GetInterpolatorTypeAsString(int g);
   static int GetInterpolatorTypeFromString(const char*);
 
