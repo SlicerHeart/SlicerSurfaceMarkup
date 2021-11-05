@@ -164,12 +164,12 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
 
   if (!inputPoints)
   {
-    vtkErrorMacro("UpdateNurbsPolyData: No valid input point list is set");
+    vtkErrorMacro("ComputeNurbsPolyData: No valid input point list is set");
     return;
   }
   if (this->InputResolution[0] < 2 || this->InputResolution[1] < 2)
   {
-    vtkErrorMacro("UpdateNurbsPolyData: No valid input resolution is set");
+    vtkErrorMacro("ComputeNurbsPolyData: No valid input resolution is set");
     return;
   }
 
@@ -315,30 +315,31 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   //
   // return eval_points
 
-  if (this->Delta < 0.0001) //TODO: Change if delta meaning changes?
+  if (this->Delta < 0.001)
   {
     vtkErrorMacro("EvaluateSurface: Delta value too small");
     return;
   }
 
-  int sampleSizeU = 0, sampliSizeV = 0;
-  this->CalculateSampleSize(sampleSizeU, sampliSizeV);
+  int sampleSizeU = 0, sampleSizeV = 0;
+  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
   int dimension = 3; // We only work in three dimensions
   int pdimension = 2; // Parametric dimension
 
-  vtkNew<vtkDoubleArray> knots;
-  //TODO: Two knots for the two sample sizes?
-  this->LinSpace(0.0, 1.0, sampleSizeU, knots); // We use uniform sampling along the u and v directions
+  vtkNew<vtkDoubleArray> knotsU;
+  this->LinSpace(0.0, 1.0, sampleSizeU, knotsU);
+  vtkNew<vtkDoubleArray> knotsV;
+  this->LinSpace(0.0, 1.0, sampleSizeV, knotsV);
 
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;
-  this->FindSpans(this->InterpolationDegrees[0], uKnots, this->InputResolution[0], knots, uSpans);
-  this->BasisFunctions(this->InterpolationDegrees[0], uKnots, uSpans, knots, uBasis);
+  this->FindSpans(this->InterpolationDegrees[0], uKnots, this->InputResolution[0], knotsU, uSpans);
+  this->BasisFunctions(this->InterpolationDegrees[0], uKnots, uSpans, knotsU, uBasis);
 
   vtkNew<vtkIntArray> vSpans;
   vtkNew<vtkDoubleArray> vBasis;
-  this->FindSpans(this->InterpolationDegrees[1], vKnots, this->InputResolution[1], knots, vSpans);
-  this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knots, vBasis);
+  this->FindSpans(this->InterpolationDegrees[1], vKnots, this->InputResolution[1], knotsV, vSpans);
+  this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knotsV, vBasis);
 
   outEvalPoints->Initialize();
   for (int i=0; i<uSpans->GetNumberOfValues(); ++i)
@@ -1208,7 +1209,6 @@ void vtkNURBSSurfaceSource::DestructMatrix(double** matrix, int m, int n/*=0*/)
 void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSizeV)
 {
   int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
-  //TODO: Make a multiplied of input resolution. Decrease default delta?
-  sampleSizeU = samplesPerGridCell;
-  sampleSizeV = samplesPerGridCell;
+  sampleSizeU = samplesPerGridCell * this->InputResolution[0];
+  sampleSizeV = samplesPerGridCell * this->InputResolution[1];
 }

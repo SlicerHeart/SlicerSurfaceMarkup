@@ -164,7 +164,7 @@ protected:
   /// Evaluation delta.
   /// Controls the number of surface points. The smaller the delta value, smoother the surface.
   /// The number of interpolated points will be /sa InputResolution / Delta.
-  double Delta = 0.05;
+  double Delta = 0.2;
 
   /// Activate centripetal parametrization method. Default: false
   bool UseCentripetal = false;

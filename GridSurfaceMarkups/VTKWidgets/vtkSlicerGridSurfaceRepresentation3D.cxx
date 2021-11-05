@@ -363,16 +363,17 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
 
   int gridResolution[2] = {0};
   node->GetGridResolution(gridResolution);
-  if (node->GetNumberOfDefinedControlPoints() < gridResolution[0] * gridResolution[0])
+  if ( node->GetNumberOfDefinedControlPoints() < gridResolution[0] * gridResolution[0]
+    && this->GridSurfaceControlPointSet->GetNumberOfPoints() == 0 )
   {
     // Do not calculate surface while plane control points are being defined
-    this->NurbsSurfaceSource->SetInputResolution(0,0); //TODO: Use a different way to detect changes in resolution
     return;
   }
 
   // Change internal grid if grid resolution has changed
   if ( gridResolution[0] != this->NurbsSurfaceSource->GetInputResolution()[0]
-    || gridResolution[1] != this->NurbsSurfaceSource->GetInputResolution()[1] )
+    || gridResolution[1] != this->NurbsSurfaceSource->GetInputResolution()[1]
+    || this->GridSurfaceControlPointSet->GetNumberOfPoints() == 0 ) // If grid was just defined
   {
     this->InitializeGridSurfaceControlPoints(gridResolution[0], gridResolution[1]);
     this->UpdateInterpolatorConnection();

@@ -100,6 +100,7 @@ public:
   void SetInterpolatorType(int type);
 
   /// Connect the appropriate interpolator algorithm if input is available.
+  /// Also connect/disconnect the whole pipeline to prevent invalid input connection errors.
   void UpdateInterpolatorConnection();
 
   static const char* GetInterpolatorTypeAsString(int g);
