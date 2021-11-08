@@ -61,9 +61,9 @@ public:
   //--------------------------------------------------------------------------------
   // MRMLNode methods
   //--------------------------------------------------------------------------------
-  const char* GetIcon() override {return ":/Icons/MarkupsGeneric.png";}
-  const char* GetAddIcon() override {return ":/Icons/MarkupsGenericMouseModePlace.png";}
-  const char* GetPlaceAddIcon() override {return ":/Icons/MarkupsGenericMouseModePlaceAdd.png";}
+  const char* GetIcon() override {return ":/Icons/MarkupsGridSurface.png";}
+  const char* GetAddIcon() override {return ":/Icons/MarkupsGridSurfaceMouseModePlace.png";}
+  const char* GetPlaceAddIcon() override {return ":/Icons/MarkupsGridSurfaceMouseModePlaceAdd.png";}
 
   vtkMRMLNode* CreateNodeInstance() override;
 
