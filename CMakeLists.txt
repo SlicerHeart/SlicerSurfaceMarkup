@@ -4,7 +4,7 @@ project(GridSurface)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/GridSurface")
+set(EXTENSION_HOMEPAGE "https://github.com/cpinter/SlicerGridSurface/tree/master")
 set(EXTENSION_CATEGORY "Informatics")
 set(EXTENSION_CONTRIBUTORS "Csaba Pinter (Pixel Medical / Ebatinca), Rafael Palomar (Oslo University Hospital / NTNU), Andras Lasso (PerkLab, Queen's)")
 set(EXTENSION_DESCRIPTION "3D Slicer extension adding support for grid surfaces such as NURBS or Bézier surfaces")
