@@ -1,4 +1,4 @@
-# GridSurface extension for 3D Slicer
+# SurfaceMarkup extension for 3D Slicer
 
 Adds support for grid surfaces such as NURBS or Bézier surfaces.
 - New markup type called GridSurface that shows up in the Markups module
@@ -6,6 +6,6 @@ Adds support for grid surfaces such as NURBS or Bézier surfaces.
 - The grid control points are added automatically to uniformly fill the defined surface area
 - The surface can be edited by moving the control points
 
-![NURBS](https://raw.githubusercontent.com/cpinter/SlicerGridSurface/master/Screenshots/NURBS.png?raw=true)
+![NURBS](https://raw.githubusercontent.com/cpinter/SlicerSurfaceMarkup/master/Screenshots/NURBS.png?raw=true)
 
-![Bezier](https://raw.githubusercontent.com/cpinter/SlicerGridSurface/master/Screenshots/Bezier.png?raw=true)
+![Bezier](https://raw.githubusercontent.com/cpinter/SlicerSurfaceMarkup/master/Screenshots/Bezier.png?raw=true)
