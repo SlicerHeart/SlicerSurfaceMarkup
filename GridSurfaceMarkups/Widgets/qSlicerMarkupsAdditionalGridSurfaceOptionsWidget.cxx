@@ -36,9 +36,6 @@
 
 ==============================================================================*/ 
 
-// Markups widgets includes
-#include "qSlicerMarkupsAdditionalOptionsWidget_p.h"
-
 // qMRML includes
 #include "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
 #include "ui_qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
