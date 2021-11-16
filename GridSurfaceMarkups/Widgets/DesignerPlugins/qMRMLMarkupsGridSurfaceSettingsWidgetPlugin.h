@@ -36,18 +36,18 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin_h
-#define __qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin_h
+#ifndef __qMRMLMarkupsGridSurfaceSettingsWidgetPlugin_h
+#define __qMRMLMarkupsGridSurfaceSettingsWidgetPlugin_h
 
 #include "qSlicerGridSurfaceMarkupsModuleWidgetsAbstractPlugin.h"
 
-class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_PLUGINS_EXPORT qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin
+class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_PLUGINS_EXPORT qMRMLMarkupsGridSurfaceSettingsWidgetPlugin
     : public QObject, public qSlicerMarkupsModuleWidgetsAbstractPlugin
 {
   Q_OBJECT
 
 public:
-  qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin(QObject *_parent = nullptr);
+  qMRMLMarkupsGridSurfaceSettingsWidgetPlugin(QObject *_parent = nullptr);
 
   QWidget *createWidget(QWidget *_parent) override;
   QString  domXml() const override;

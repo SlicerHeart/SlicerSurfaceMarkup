@@ -54,7 +54,7 @@
 #include <vtkSlicerLineWidget.h>
 
 // Markups Widgets includes
-#include "qSlicerMarkupsAdditionalOptionsWidgetsFactory.h" 
+#include "qMRMLMarkupsOptionsWidgetsFactory.h" 
 
 // GridSurface Markups VTKWidgets includes
 #include "vtkSlicerGridSurfaceWidget.h"
@@ -63,7 +63,7 @@
 #include <qSlicerCoreApplication.h>
 
 // GridSurface Markups Widgets
-#include "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
+#include "qMRMLMarkupsGridSurfaceSettingsWidget.h"
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -167,9 +167,9 @@ void qSlicerGridSurfaceMarkupsModule::setup()
   vtkNew<vtkSlicerGridSurfaceWidget> gridSurfaceWidget;
   markupsLogic->RegisterMarkupsNode(gridSurfaceNode, gridSurfaceWidget);
 
-  // Create and configure the additional widgets
-  auto optionsWidgetFactory = qSlicerMarkupsAdditionalOptionsWidgetsFactory::instance();
-  optionsWidgetFactory->registerAdditionalOptionsWidget(new qSlicerMarkupsAdditionalGridSurfaceOptionsWidget()); 
+  // Create and configure the options widgets
+  auto optionsWidgetFactory = qMRMLMarkupsOptionsWidgetsFactory::instance();
+  optionsWidgetFactory->registerOptionsWidget(new qMRMLMarkupsGridSurfaceSettingsWidget()); 
 }
 
 //-----------------------------------------------------------------------------

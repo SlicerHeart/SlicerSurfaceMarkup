@@ -36,14 +36,14 @@
 
 ==============================================================================*/
 
-#ifndef __qSlicerMarkupsAdditionalGridSurfaceOptionsWidget_h
-#define __qSlicerMarkupsAdditionalGridSurfaceOptionsWidget_h
+#ifndef __qMRMLMarkupsGridSurfaceSettingsWidget_h
+#define __qMRMLMarkupsGridSurfaceSettingsWidget_h
 
 // Qt includes
 #include <QWidget>
 
 // Markups widgets includes
-#include "qSlicerMarkupsAdditionalOptionsWidget.h"
+#include "qMRMLMarkupsAbstractOptionsWidget.h"
 
 // Grid Surface widgets includes
 #include "qSlicerGridSurfaceMarkupsModuleWidgetsExport.h"
@@ -54,24 +54,21 @@
 
 class vtkMRMLNode;
 class vtkMRMLMarkupsGridSurfaceNode;
-class qSlicerMarkupsAdditionalGridSurfaceOptionsWidget;
-class qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate;
+class qMRMLMarkupsGridSurfaceSettingsWidget;
+class qMRMLMarkupsGridSurfaceSettingsWidgetPrivate;
 
-class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_EXPORT qSlicerMarkupsAdditionalGridSurfaceOptionsWidget : public qSlicerMarkupsAdditionalOptionsWidget
+class Q_SLICER_MODULE_GRIDSURFACEMARKUPS_WIDGETS_EXPORT qMRMLMarkupsGridSurfaceSettingsWidget : public qMRMLMarkupsAbstractOptionsWidget
 {
   Q_OBJECT
   QVTK_OBJECT
 
 public:
-  typedef qSlicerMarkupsAdditionalOptionsWidget Superclass;
-  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(QWidget* parent=nullptr);
-  ~qSlicerMarkupsAdditionalGridSurfaceOptionsWidget() override;
-
-  /// Returns the current MRML Grid Surface node
-  vtkMRMLMarkupsGridSurfaceNode* mrmlGridSurfaceNode()const;
+  typedef qMRMLMarkupsAbstractOptionsWidget Superclass;
+  qMRMLMarkupsGridSurfaceSettingsWidget(QWidget* parent=nullptr);
+  ~qMRMLMarkupsGridSurfaceSettingsWidget() override;
 
   /// Gets the name of the additional options widget type
-  const QString getAdditionalOptionsWidgetTypeName() override { return "Grid Surface"; }
+  const QString className() const override { return "qMRMLMarkupsGridSurfaceSettingsWidget"; }
 
   /// Updates the widget based on information from MRML.
   void updateWidgetFromMRML() override;
@@ -79,29 +76,34 @@ public:
   /// Checks whether a given node can be handled by the widget
   bool canManageMRMLMarkupsNode(vtkMRMLMarkupsNode *markupsNode) const override;
 
-public slots:
+  /// Returns an instance of the widget
+  qMRMLMarkupsAbstractOptionsWidget* createInstance() const override
+    { return new qMRMLMarkupsGridSurfaceSettingsWidget(); }
 
+public slots:
   /// Set the MRML node of interest
   void setMRMLMarkupsNode(vtkMRMLMarkupsNode* node) override;
 
-  /// Sets the vtkMRMLMarkupsNode to operate on.
-  void setMRMLMarkupsNode(vtkMRMLNode* node) override;
-
 protected slots:
   /// Internal function to update the widgets based on the Grid Surface node
-  void onMRMLNodeModified();
+  //void onMRMLNodeModified();
   /// Internal function to update type of Grid Surface
   void onGridSurfaceTypeParameterChanged();
   /// Handle apply grid surface button click
   void onApplyGridResolution();
 
 protected:
-  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPrivate &d, QWidget* parent=nullptr);
+  qMRMLMarkupsGridSurfaceSettingsWidget(QWidget* parent, qMRMLMarkupsGridSurfaceSettingsWidgetPrivate &d);
+
+protected:
   void setup();
 
+protected:
+  QScopedPointer<qMRMLMarkupsGridSurfaceSettingsWidgetPrivate> d_ptr;
+
 private:
-  Q_DECLARE_PRIVATE(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
-  Q_DISABLE_COPY(qSlicerMarkupsAdditionalGridSurfaceOptionsWidget);
+  Q_DECLARE_PRIVATE(qMRMLMarkupsGridSurfaceSettingsWidget);
+  Q_DISABLE_COPY(qMRMLMarkupsGridSurfaceSettingsWidget);
 };
 
 #endif

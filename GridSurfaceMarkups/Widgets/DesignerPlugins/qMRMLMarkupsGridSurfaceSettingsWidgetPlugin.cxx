@@ -36,44 +36,44 @@
 
 ==============================================================================*/
 
-#include "qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin.h"
-#include "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h"
+#include "qMRMLMarkupsGridSurfaceSettingsWidgetPlugin.h"
+#include "qMRMLMarkupsGridSurfaceSettingsWidget.h"
 
 //-----------------------------------------------------------------------------
-qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin::qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin(QObject *_parent)
+qMRMLMarkupsGridSurfaceSettingsWidgetPlugin::qMRMLMarkupsGridSurfaceSettingsWidgetPlugin(QObject *_parent)
   : QObject(_parent)
 {
 }
 
 //-----------------------------------------------------------------------------
-QWidget *qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin::createWidget(QWidget *_parent)
+QWidget *qMRMLMarkupsGridSurfaceSettingsWidgetPlugin::createWidget(QWidget *_parent)
 {
-  qSlicerMarkupsAdditionalGridSurfaceOptionsWidget* _widget = new qSlicerMarkupsAdditionalGridSurfaceOptionsWidget(_parent);
+  qMRMLMarkupsGridSurfaceSettingsWidget* _widget = new qMRMLMarkupsGridSurfaceSettingsWidget(_parent);
   return _widget;
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin::domXml() const
+QString qMRMLMarkupsGridSurfaceSettingsWidgetPlugin::domXml() const
 {
-  return "<widget class=\"qSlicerMarkupsAdditionalGridSurfaceOptionsWidget\" \
-          name=\"MRMLMarkupsAdditionalGridSurfaceOptionsWidget\">\n"
+  return "<widget class=\"qMRMLMarkupsGridSurfaceSettingsWidget\" \
+          name=\"MRMLMarkupsGridSurfaceSettingsWidget\">\n"
           "</widget>\n";
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin::includeFile() const
+QString qMRMLMarkupsGridSurfaceSettingsWidgetPlugin::includeFile() const
 {
-  return "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget.h";
+  return "qMRMLMarkupsGridSurfaceSettingsWidget.h";
 }
 
 //-----------------------------------------------------------------------------
-bool qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin::isContainer() const
+bool qMRMLMarkupsGridSurfaceSettingsWidgetPlugin::isContainer() const
 {
   return false;
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerMarkupsAdditionalGridSurfaceOptionsWidgetPlugin::name() const
+QString qMRMLMarkupsGridSurfaceSettingsWidgetPlugin::name() const
 {
-  return "qSlicerMarkupsAdditionalGridSurfaceOptionsWidget";
+  return "qMRMLMarkupsGridSurfaceSettingsWidget";
 }
