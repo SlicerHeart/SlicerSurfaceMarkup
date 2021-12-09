@@ -9,3 +9,11 @@ Adds support for grid surfaces such as NURBS or Bézier surfaces.
 ![NURBS](https://raw.githubusercontent.com/cpinter/SlicerSurfaceMarkup/master/Screenshots/NURBS.png?raw=true)
 
 ![Bezier](https://raw.githubusercontent.com/cpinter/SlicerSurfaceMarkup/master/Screenshots/Bezier.png?raw=true)
+
+## Funding sources:
+
+- The Cora Topolewski Fund at the Children's Hospital of Philadelphia (CHOP)
+
+- CHOP Frontier Grant (Pediatric Valve Center)
+
+- National Heart, Blood, and Lung Institute (NHLBI) (R01 HL153166)
