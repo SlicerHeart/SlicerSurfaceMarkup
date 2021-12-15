@@ -6,9 +6,9 @@ Adds support for grid surfaces such as NURBS or Bézier surfaces.
 - The grid control points are added automatically to uniformly fill the defined surface area
 - The surface can be edited by moving the control points
 
-![NURBS](https://raw.githubusercontent.com/cpinter/SlicerSurfaceMarkup/master/Screenshots/NURBS.png?raw=true)
+![NURBS](https://raw.githubusercontent.com/SlicerHeart/SlicerSurfaceMarkup/master/Screenshots/NURBS.png?raw=true)
 
-![Bezier](https://raw.githubusercontent.com/cpinter/SlicerSurfaceMarkup/master/Screenshots/Bezier.png?raw=true)
+![Bezier](https://raw.githubusercontent.com/SlicerHeart/SlicerSurfaceMarkup/master/Screenshots/Bezier.png?raw=true)
 
 ## Funding sources:
 
