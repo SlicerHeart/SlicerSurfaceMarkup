@@ -47,8 +47,7 @@
 class qSlicerGridSurfaceMarkupsModulePrivate;
 class vtkMRMLScene;
 
-class Q_SLICER_QTMODULES_GRIDSURFACEMARKUPS_EXPORT
-qSlicerGridSurfaceMarkupsModule
+class Q_SLICER_QTMODULES_GRIDSURFACEMARKUPS_EXPORT qSlicerGridSurfaceMarkupsModule
   : public qSlicerLoadableModule
 {
   Q_OBJECT
@@ -58,7 +57,7 @@ qSlicerGridSurfaceMarkupsModule
 public:
 
   typedef qSlicerLoadableModule Superclass;
-  explicit qSlicerGridSurfaceMarkupsModule(QObject *parent=0);
+  explicit qSlicerGridSurfaceMarkupsModule(QObject *parent=nullptr);
   ~qSlicerGridSurfaceMarkupsModule();
 
   qSlicerGetTitleMacro(QTMODULE_TITLE);
@@ -72,9 +71,6 @@ public:
 
   QStringList categories() const override;
   QStringList dependencies()  const override;
-  QStringList associatedNodeTypes()  const override;
-
-  void setMRMLScene(vtkMRMLScene* scene) override;
 
 protected:
 
@@ -82,7 +78,7 @@ protected:
   void setup() override;
 
   /// Create and return the widget representation associated to this module
-  qSlicerAbstractModuleRepresentation * createWidgetRepresentation() override;
+  qSlicerAbstractModuleRepresentation* createWidgetRepresentation() override;
 
   /// Create and return the logic associated to this module
   vtkMRMLAbstractLogic* createLogic() override;

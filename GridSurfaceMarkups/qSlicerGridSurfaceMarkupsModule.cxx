@@ -38,32 +38,20 @@
 
 #include "qSlicerGridSurfaceMarkupsModule.h"
 
-// MRML includes
-#include "vtkMRMLMarkupsGridSurfaceNode.h"
-
 // Qt includes
 #include <QDebug>
 
-// GridSurface Markups Logic includes
+// GridSurface Logic includes
 #include "vtkSlicerGridSurfaceMarkupsLogic.h"
 
-// Markups Logic includes
-#include <vtkSlicerMarkupsLogic.h>
-
-// Markups VTKWidgets includes
-#include <vtkSlicerLineWidget.h>
+// GridSurface Widgets
+#include "qMRMLMarkupsGridSurfaceSettingsWidget.h"
 
 // Markups Widgets includes
 #include "qMRMLMarkupsOptionsWidgetsFactory.h" 
 
-// GridSurface Markups VTKWidgets includes
-#include "vtkSlicerGridSurfaceWidget.h"
-
 #include <qSlicerModuleManager.h>
 #include <qSlicerCoreApplication.h>
-
-// GridSurface Markups Widgets
-#include "qMRMLMarkupsGridSurfaceSettingsWidget.h"
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -99,6 +87,8 @@ qSlicerGridSurfaceMarkupsModule::~qSlicerGridSurfaceMarkupsModule()
 //-----------------------------------------------------------------------------
 bool qSlicerGridSurfaceMarkupsModule::isHidden() const
 {
+  // The module has no GUI.
+  // Widget options will be shown in Markups module.
   return true;
 }
 
@@ -147,26 +137,6 @@ void qSlicerGridSurfaceMarkupsModule::setup()
 {
   this->Superclass::setup();
 
-  vtkSlicerApplicationLogic* appLogic = this->appLogic();
-  if (!appLogic)
-  {
-    qCritical() << Q_FUNC_INFO << " : invalid application logic.";
-    return;
-  }
-
-  vtkSlicerMarkupsLogic* markupsLogic =
-    vtkSlicerMarkupsLogic::SafeDownCast(appLogic->GetModuleLogic("Markups"));
-  if (!markupsLogic)
-  {
-    qCritical() << Q_FUNC_INFO << " : invalid markups logic.";
-    return;
-  }
-
-  // Register markups
-  vtkNew<vtkMRMLMarkupsGridSurfaceNode> gridSurfaceNode;
-  vtkNew<vtkSlicerGridSurfaceWidget> gridSurfaceWidget;
-  markupsLogic->RegisterMarkupsNode(gridSurfaceNode, gridSurfaceWidget);
-
   // Create and configure the options widgets
   auto optionsWidgetFactory = qMRMLMarkupsOptionsWidgetsFactory::instance();
   optionsWidgetFactory->registerOptionsWidget(new qMRMLMarkupsGridSurfaceSettingsWidget()); 
@@ -182,22 +152,4 @@ qSlicerAbstractModuleRepresentation* qSlicerGridSurfaceMarkupsModule::createWidg
 vtkMRMLAbstractLogic* qSlicerGridSurfaceMarkupsModule::createLogic()
 {
   return vtkSlicerGridSurfaceMarkupsLogic::New();
-}
-
-//-----------------------------------------------------------------------------
-QStringList qSlicerGridSurfaceMarkupsModule::associatedNodeTypes() const
-{
-  return QStringList() << "vtkMRMLMarkupsGridSurfaceNode";
-}
-
-//-----------------------------------------------------------------------------
-void qSlicerGridSurfaceMarkupsModule::setMRMLScene(vtkMRMLScene* scene)
-{
-  Superclass::setMRMLScene(scene);
-  vtkSlicerGridSurfaceMarkupsLogic* logic = vtkSlicerGridSurfaceMarkupsLogic::SafeDownCast(this->logic());
-  if (!logic)
-  {
-    qCritical() << Q_FUNC_INFO << " failed: logic is invalid";
-    return;
-  }
 }

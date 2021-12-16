@@ -39,23 +39,22 @@
 #ifndef __vtkSlicerGridSurfaceMarkupsLogic_h_
 #define __vtkSlicerGridSurfaceMarkupsLogic_h_
 
-#include <vtkSlicerMarkupsLogic.h>
+#include <vtkSlicerModuleLogic.h>
 
 #include "vtkSlicerGridSurfaceMarkupsModuleLogicExport.h"
 
 class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_LOGIC_EXPORT vtkSlicerGridSurfaceMarkupsLogic:
-  public vtkSlicerMarkupsLogic
+  public vtkSlicerModuleLogic
 {
 public:
   static vtkSlicerGridSurfaceMarkupsLogic* New();
-  vtkTypeMacro(vtkSlicerGridSurfaceMarkupsLogic, vtkSlicerMarkupsLogic);
+  vtkTypeMacro(vtkSlicerGridSurfaceMarkupsLogic, vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent) override;
 
 protected:
   vtkSlicerGridSurfaceMarkupsLogic();
   ~vtkSlicerGridSurfaceMarkupsLogic() override;
 
-  void ObserveMRMLScene() override;
   void RegisterNodes() override;
 
 private:

@@ -38,13 +38,14 @@
 
 #include "vtkSlicerGridSurfaceMarkupsLogic.h"
 
-// GridSurface Markups MRML includes
+// GridSurface MRML includes
 #include "vtkMRMLMarkupsGridSurfaceNode.h"
 
+// GridSurface VTKWidgets includes
+#include "vtkSlicerGridSurfaceWidget.h"
+
 // MRML includes
-#include <vtkMRMLModelNode.h>
 #include <vtkMRMLScene.h>
-#include <vtkMRMLSelectionNode.h>
 
 // Markups logic includes
 #include <vtkSlicerMarkupsLogic.h>
@@ -61,7 +62,6 @@ vtkStandardNewMacro(vtkSlicerGridSurfaceMarkupsLogic);
 //---------------------------------------------------------------------------
 vtkSlicerGridSurfaceMarkupsLogic::vtkSlicerGridSurfaceMarkupsLogic()
 {
-
 }
 
 //---------------------------------------------------------------------------
@@ -76,55 +76,21 @@ void vtkSlicerGridSurfaceMarkupsLogic::PrintSelf(ostream& os, vtkIndent indent)
 //-----------------------------------------------------------------------------
 void vtkSlicerGridSurfaceMarkupsLogic::RegisterNodes()
 {
-  std::cout << "Register Nodes" << std::endl;
-
-  assert(this->GetMRMLScene() != nullptr);
-
   vtkMRMLScene *scene = this->GetMRMLScene();
-
-  // Nodes
-  scene->RegisterNodeClass(vtkSmartPointer<vtkMRMLMarkupsGridSurfaceNode>::New());
-}
-
-//---------------------------------------------------------------------------
-void vtkSlicerGridSurfaceMarkupsLogic::ObserveMRMLScene()
-{
-  if (!this->GetMRMLScene())
+  if (!scene)
   {
+    vtkErrorMacro("RegisterNodes failed: invalid scene");
     return;
   }
 
-  vtkMRMLApplicationLogic* mrmlAppLogic = this->GetMRMLApplicationLogic();
-  if (!mrmlAppLogic)
+  vtkSlicerMarkupsLogic* markupsLogic = vtkSlicerMarkupsLogic::SafeDownCast(this->GetModuleLogic("Markups"));
+  if (!markupsLogic)
   {
-    vtkErrorMacro("ObserveMRMLScene: invalid MRML Application Logic.");
+    vtkErrorMacro("RegisterNodes failed: invalid markups module logic");
     return;
   }
 
-  vtkMRMLNode* node = this->GetMRMLScene()->GetNodeByID(this->GetSelectionNodeID().c_str());
-  if (!node)
-  {
-    vtkErrorMacro("Observe MRMLScene: invalid Selection Node");
-    return;
-  }
-
-  // add known markup types to the selection node
-  vtkMRMLSelectionNode* selectionNode =
-    vtkMRMLSelectionNode::SafeDownCast(node);
-  if (selectionNode)
-  {
-    // got into batch process mode so that an update on the mouse mode tool
-    // bar is triggered when leave it
-    this->GetMRMLScene()->StartState(vtkMRMLScene::BatchProcessState);
-
-    auto gridSurfaceNode = vtkSmartPointer<vtkMRMLMarkupsGridSurfaceNode>::New();
-    selectionNode->AddNewPlaceNodeClassNameToList(gridSurfaceNode->GetClassName(),
-      gridSurfaceNode->GetAddIcon(),
-      gridSurfaceNode->GetMarkupType());
-
-    // trigger an update on the mouse mode toolbar
-    this->GetMRMLScene()->EndState(vtkMRMLScene::BatchProcessState);
-  }
-
- this->Superclass::ObserveMRMLScene();
+  vtkNew<vtkMRMLMarkupsGridSurfaceNode> gridSurfaceNode;
+  vtkNew<vtkSlicerGridSurfaceWidget> gridSurfaceWidget;
+  markupsLogic->RegisterMarkupsNode(gridSurfaceNode, gridSurfaceWidget);
 }

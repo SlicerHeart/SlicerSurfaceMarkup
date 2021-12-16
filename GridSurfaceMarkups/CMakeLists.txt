@@ -35,7 +35,6 @@ set(MODULE_MOC_SRCS
 set(MODULE_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleMRML
   vtkSlicer${MODULE_NAME}ModuleLogic
-  vtkSlicer${MODULE_NAME}ModuleVTKWidgets
   qSlicer${MODULE_NAME}ModuleWidgets
   )
 

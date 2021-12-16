@@ -6,6 +6,7 @@ set(${KIT}_EXPORT_DIRECTIVE "VTK_SLICER_${MODULE_NAME_UPPER}_MODULE_LOGIC_EXPORT
 
 set(${KIT}_INCLUDE_DIRECTORIES
    ${CMAKE_CURRENT_BINARY_DIR}
+   ${vtkSlicerGridSurfaceMarkupsModuleVTKWidgets_INCLUDE_DIRS}
   )
 
 set(${KIT}_SRCS
@@ -17,6 +18,7 @@ set(${KIT}_SRCS
 
 set(${KIT}_TARGET_LIBRARIES
   vtkSlicer${MODULE_NAME}ModuleMRML
+  vtkSlicer${MODULE_NAME}ModuleVTKWidgets
   vtkSlicerMarkupsModuleLogic
   )
 
