@@ -84,7 +84,6 @@ vtkSlicerGridSurfaceRepresentation3D::~vtkSlicerGridSurfaceRepresentation3D() = 
 //----------------------------------------------------------------------
 void vtkSlicerGridSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller, unsigned long event, void* callData /*=nullptr*/)
 {
-
   this->Superclass::UpdateFromMRML(caller, event, callData);
 
   auto gridSurfaceMarkupsNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(this->GetMarkupsNode());
@@ -343,7 +342,11 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
     this->NurbsSurfaceSource->SetInterpolationDegrees(
       gridResolution[0] == 3 ? 2 : 3, gridResolution[1] == 3 ? 2 : 3);
 
-    node->ResampleToNewGridResolution();
+    if (node->GetNumberOfControlPoints() != gridResolution[0] * gridResolution[1])
+    {
+      // Redefine control points to new resolution if needed
+      node->ResampleToNewGridResolution();
+    }
   }
 
   // Set markup control points to the surface source
