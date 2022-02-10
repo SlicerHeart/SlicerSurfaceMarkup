@@ -68,7 +68,7 @@ vtkSlicerGridSurfaceRepresentation3D::vtkSlicerGridSurfaceRepresentation3D()
   : Superclass()
 {
   this->ControlPolygonTubeFilter->SetInputData(this->ControlPolygonPolyData.GetPointer());
-  this->ControlPolygonTubeFilter->SetRadius(1);
+  this->ControlPolygonTubeFilter->SetRadius(0.25);
   this->ControlPolygonTubeFilter->SetNumberOfSides(20);
 
   this->ControlPolygonMapper->SetInputConnection(this->ControlPolygonTubeFilter->GetOutputPort());
