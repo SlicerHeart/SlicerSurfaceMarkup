@@ -326,10 +326,12 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   int dimension = 3; // We only work in three dimensions
   int pdimension = 2; // Parametric dimension
 
+  double minLinSpace = -this->ExpansionFactor;
+  double maxLinSpace = 1.0 + this->ExpansionFactor;
   vtkNew<vtkDoubleArray> knotsU;
-  this->LinSpace(0.0, 1.0, sampleSizeU, knotsU);
+  this->LinSpace(minLinSpace, maxLinSpace, sampleSizeU, knotsU);
   vtkNew<vtkDoubleArray> knotsV;
-  this->LinSpace(0.0, 1.0, sampleSizeV, knotsV);
+  this->LinSpace(minLinSpace, maxLinSpace, sampleSizeV, knotsV);
 
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;

@@ -311,7 +311,7 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateInterpolatorConnection()
  }
 
 //-----------------------------------------------------------------------------
-void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode *node)
+void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode* node)
 {
   if (!node)
   {
@@ -348,6 +348,9 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
       node->ResampleToNewGridResolution();
     }
   }
+
+  // Set extrapolation margin
+  this->NurbsSurfaceSource->SetExpansionFactor(node->GetExpansionFactor());
 
   // Set markup control points to the surface source
   vtkNew<vtkPoints> controlPoints;

@@ -109,9 +109,14 @@ public:
   void SetGridResolution(int x, int y);
   ///@}
 
+  /// Set expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
+  vtkSetMacro(ExpansionFactor, double);
+  /// Get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
+  vtkGetMacro(ExpansionFactor, double);
+
   //TODO:
   void UpdateGridSurfaceFromControlPoints();
-  //TOOD:
+  //TODO:
   void UpdateControlPointsFromGridSurface();
 
 protected:
@@ -121,6 +126,11 @@ protected:
   bool IsUpdatingGridSurfaceFromControlPoints{false};
 
   int GridResolution[2] { 4, 4 };
+
+  /// Expansion factor. The surface will overreach the edge control points by this fraction of its size.
+  /// Valid values are [0.0, 0.5]. 0 by default.
+  /// Note: Only some surface sources support this, such as NURBS.
+  double ExpansionFactor = 0.0;
 
   /// In order to be able to resample to a new grid resolution after a change.
   int PreviousGridResolution[2] { 0, 0 };

@@ -74,7 +74,11 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   vtkBooleanMacro(UseCentripetal, bool);
   /// Get flag determining whether centripetal parametrization method is used. False by default
   vtkGetMacro(UseCentripetal, bool);
-
+  /// Set expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
+  vtkSetMacro(ExpansionFactor, double);
+  /// Get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
+  vtkGetMacro(ExpansionFactor, double);
+  
 protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPolyData* outputPolyData);
@@ -166,6 +170,10 @@ protected:
 
   /// Activate centripetal parametrization method. Default: false
   bool UseCentripetal = false;
+
+  /// Expansion factor. The surface will overreach the edge control points by this fraction of its size.
+  /// Valid values are [0.0, 0.5]. 0 by default.
+  double ExpansionFactor = 0.0;
 
  protected:
   vtkNURBSSurfaceSource();
