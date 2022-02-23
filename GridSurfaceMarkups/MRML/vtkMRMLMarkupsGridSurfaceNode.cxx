@@ -53,6 +53,9 @@
 
 const int NUMBER_OF_PLANE_CONTROL_POINTS = 3; // 3 points used for initial plane definition, then filled with the rest
 
+const char* vtkMRMLMarkupsGridSurfaceNode::OutputSurfaceModelNodeReferenceRole = "outputSurfaceModel";
+const char* vtkMRMLMarkupsGridSurfaceNode::OutputSurfaceModelNodeReferenceMRMLAttributeName = "outputSurfaceModelNodeRef";
+
 //--------------------------------------------------------------------------------
 vtkMRMLNodeNewMacro(vtkMRMLMarkupsGridSurfaceNode);
 
@@ -66,6 +69,11 @@ vtkMRMLMarkupsGridSurfaceNode::vtkMRMLMarkupsGridSurfaceNode()
   this->CurveInputPoly->GetPoints()->AddObserver(vtkCommand::ModifiedEvent, this->MRMLCallbackCommand);
 
   this->AddObserver(vtkMRMLMarkupsNode::PointPositionDefinedEvent, this->MRMLCallbackCommand);
+
+  vtkNew<vtkIntArray> events;
+  events->InsertNextValue(vtkCommand::ModifiedEvent);
+  this->AddNodeReferenceRole(
+    this->GetOutputSurfaceModelNodeReferenceRole(), this->GetOutputSurfaceModelNodeReferenceMRMLAttributeName(), events.GetPointer());
 }
 
 //----------------------------------------------------------------------------
@@ -163,6 +171,44 @@ void vtkMRMLMarkupsGridSurfaceNode::SetGridResolution(int x, int y)
 
   // Modified event triggers update in the representation, which then calls ResampleToNewGridResolution
   this->Modified();
+}
+
+//----------------------------------------------------------------------------
+const char* vtkMRMLMarkupsGridSurfaceNode::GetOutputSurfaceModelNodeReferenceMRMLAttributeName()
+{
+  return vtkMRMLMarkupsGridSurfaceNode::OutputSurfaceModelNodeReferenceMRMLAttributeName;
+}
+
+//----------------------------------------------------------------------------
+const char* vtkMRMLMarkupsGridSurfaceNode::GetOutputSurfaceModelNodeReferenceRole()
+{
+  return vtkMRMLMarkupsGridSurfaceNode::OutputSurfaceModelNodeReferenceRole;
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::SetOutputSurfaceModelNodeID(const char* modelNodeId)
+{
+  // Disconnect previous output surface model node
+  vtkMRMLModelNode* currentOutputSurfaceModelNode = this->GetOutputSurfaceModelNode();
+  if (currentOutputSurfaceModelNode)
+  {
+    currentOutputSurfaceModelNode->SetDisplayVisibility(false);
+    currentOutputSurfaceModelNode->SetPolyDataConnection(nullptr);
+  }
+
+  this->SetNodeReferenceID(this->GetOutputSurfaceModelNodeReferenceRole(), modelNodeId);
+}
+
+//----------------------------------------------------------------------------
+const char* vtkMRMLMarkupsGridSurfaceNode::GetOutputSurfaceModelNodeID()
+{
+  return this->GetNodeReferenceID(this->GetOutputSurfaceModelNodeReferenceRole());
+}
+
+//----------------------------------------------------------------------------
+vtkMRMLModelNode* vtkMRMLMarkupsGridSurfaceNode::GetOutputSurfaceModelNode()
+{
+  return vtkMRMLModelNode::SafeDownCast(this->GetNodeReference(this->GetOutputSurfaceModelNodeReferenceRole()));
 }
 
 //---------------------------------------------------------------------------

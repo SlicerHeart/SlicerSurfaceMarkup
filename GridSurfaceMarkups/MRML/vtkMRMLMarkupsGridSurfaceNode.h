@@ -119,8 +119,21 @@ public:
   //TODO:
   void UpdateControlPointsFromGridSurface();
 
+  /// Get reference role for the output surface node
+  virtual const char* GetOutputSurfaceModelNodeReferenceRole();
+
+  /// Set output surface node, which receives the generated surface polydata
+  void SetOutputSurfaceModelNodeID(const char* modelNodeId);
+  /// Get output surface node, which receives the generated surface polydata
+  const char* GetOutputSurfaceModelNodeID();
+  /// Get output surface node, which receives the generated surface polydata
+  vtkMRMLModelNode* GetOutputSurfaceModelNode();
+
 protected:
   int GridSurfaceType{vtkMRMLMarkupsGridSurfaceNode::NURBS};
+
+  static const char* OutputSurfaceModelNodeReferenceRole;
+  static const char* OutputSurfaceModelNodeReferenceMRMLAttributeName;
 
   bool IsUpdatingControlPointsFromGridSurface{false};
   bool IsUpdatingGridSurfaceFromControlPoints{false};
@@ -136,6 +149,7 @@ protected:
   int PreviousGridResolution[2] { 0, 0 };
 
 protected:
+  virtual const char* GetOutputSurfaceModelNodeReferenceMRMLAttributeName();
   void FillControlPointGridFromCorners(double position_0[3], double position_1[3], double position_2[3], vtkPoints* controlPoints);
   void ResampleToNewGridResolution();
 

@@ -42,6 +42,7 @@
 
 // MRML includes
 #include <vtkMRMLDisplayNode.h>
+#include <vtkMRMLModelNode.h>
 
 // GridSurfaceMarkups includes
 #include <vtkMRMLMarkupsGridSurfaceNode.h>
@@ -81,6 +82,7 @@ void qMRMLMarkupsGridSurfaceSettingsWidgetPrivate::setupUi(qMRMLMarkupsGridSurfa
 
   QObject::connect(this->surfaceTypeComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceTypeParameterChanged()));
   QObject::connect(this->applyGridResolutionButton, SIGNAL(clicked()), q, SLOT(onApplyGridResolution()));
+  QObject::connect(this->modelNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), q, SLOT(onGridSurfaceTypeParameterChanged()));
   q->setEnabled(q->MarkupsNode != nullptr);
 }
 
@@ -151,6 +153,11 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::updateWidgetFromMRML()
   wasBlocked = d->gridResolutionSpinBox_Y->blockSignals(true);
   d->gridResolutionSpinBox_Y->setValue(gridResolution[1]);
   d->gridResolutionSpinBox_Y->blockSignals(wasBlocked);
+
+  vtkMRMLModelNode* modelNode = markupsGridSurfaceNode->GetOutputSurfaceModelNode();
+  wasBlocked = d->modelNodeSelector->blockSignals(true);
+  d->modelNodeSelector->setCurrentNode(modelNode);
+  d->modelNodeSelector->blockSignals(wasBlocked);
 }
 
 //-----------------------------------------------------------------------------
@@ -164,6 +171,15 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceTypeParameterChanged()
   }
   MRMLNodeModifyBlocker blocker(gridSurfaceNode);
   gridSurfaceNode->SetGridSurfaceType(d->surfaceTypeComboBox->currentData().toInt());
+  vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast(d->modelNodeSelector->currentNode());
+  if (modelNode)
+  {
+    modelNode->CreateDefaultDisplayNodes();
+    modelNode->SetDisplayVisibility(true);
+    // Prevent control point snapping on the output surface
+    modelNode->SetSelectable(false);
+  }
+  gridSurfaceNode->SetOutputSurfaceModelNodeID(modelNode ? modelNode->GetID() : "");
 }
 
 //-----------------------------------------------------------------------------
@@ -177,4 +193,13 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onApplyGridResolution()
   }
   MRMLNodeModifyBlocker blocker(gridSurfaceNode);
   gridSurfaceNode->SetGridResolution(d->gridResolutionSpinBox_X->value(), d->gridResolutionSpinBox_Y->value());
+}
+
+// --------------------------------------------------------------------------
+void qMRMLMarkupsGridSurfaceSettingsWidget::setMRMLScene(vtkMRMLScene *mrmlScene)
+{
+  Q_D(qMRMLMarkupsGridSurfaceSettingsWidget);
+
+  Superclass::setMRMLScene(mrmlScene);
+  d->modelNodeSelector->setMRMLScene(mrmlScene);
 }

@@ -278,17 +278,34 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateInterpolatorConnection()
   switch (gridSurfaceNode->GetGridSurfaceType())
   {
   case vtkMRMLMarkupsGridSurfaceNode::NURBS:
-    this->GridSurfaceNormals->SetInputConnection(this->NurbsSurfaceSource->GetOutputPort());
+  {
+    vtkMRMLModelNode* outputSurfaceModelNode = gridSurfaceNode->GetOutputSurfaceModelNode();
+    if (!outputSurfaceModelNode)
+    {
+      this->GridSurfaceNormals->SetInputConnection(this->NurbsSurfaceSource->GetOutputPort());
+      this->GridSurfaceMapper->SetInputConnection(this->GridSurfaceNormals->GetOutputPort());
+      this->GridSurfaceActor->SetMapper(this->GridSurfaceMapper);
+    }
+    else
+    {
+      this->GridSurfaceNormals->SetInputConnection(this->NurbsSurfaceSource->GetOutputPort());
+      this->GridSurfaceMapper->SetInputConnection(nullptr);
+      this->GridSurfaceActor->SetMapper(nullptr);
+      // Connect NURBS surface output to the surface model node
+      outputSurfaceModelNode->SetPolyDataConnection(this->GridSurfaceNormals->GetOutputPort());
+    }
     break;
+  }
   case vtkMRMLMarkupsGridSurfaceNode::Bezier:
+  {
     this->GridSurfaceNormals->SetInputConnection(this->BezierSurfaceSource->GetOutputPort());
+    this->GridSurfaceMapper->SetInputConnection(this->GridSurfaceNormals->GetOutputPort());
+    this->GridSurfaceActor->SetMapper(this->GridSurfaceMapper);
     break;
+  }
   default:
     vtkErrorMacro("UpdateInterpolatorConnection: Invalid interpolator type");
   }
-
-  this->GridSurfaceMapper->SetInputConnection(this->GridSurfaceNormals->GetOutputPort());
-  this->GridSurfaceActor->SetMapper(this->GridSurfaceMapper);
 }
 
 //-----------------------------------------------------------------------------

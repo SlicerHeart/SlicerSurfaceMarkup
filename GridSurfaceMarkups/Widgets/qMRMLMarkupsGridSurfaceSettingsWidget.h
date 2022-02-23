@@ -84,6 +84,8 @@ public slots:
   /// Set the MRML node of interest
   void setMRMLMarkupsNode(vtkMRMLMarkupsNode* node) override;
 
+  void setMRMLScene(vtkMRMLScene* scene) override;
+
 protected slots:
   /// Internal function to update the widgets based on the Grid Surface node
   //void onMRMLNodeModified();
