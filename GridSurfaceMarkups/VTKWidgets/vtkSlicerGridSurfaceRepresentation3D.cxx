@@ -337,7 +337,7 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
 
   int gridResolution[2] = {0};
   node->GetGridResolution(gridResolution);
-  if ( node->GetNumberOfDefinedControlPoints() < gridResolution[0] * gridResolution[0]
+  if ( node->GetNumberOfDefinedControlPoints() < gridResolution[0] * gridResolution[1]
     && this->GridSurfaceControlPointSet->GetNumberOfPoints() == 0 )
   {
     // Do not calculate surface while plane control points are being defined
