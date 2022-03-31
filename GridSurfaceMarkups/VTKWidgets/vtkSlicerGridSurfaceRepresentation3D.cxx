@@ -369,6 +369,9 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
   // Set extrapolation margin
   this->NurbsSurfaceSource->SetExpansionFactor(node->GetExpansionFactor());
 
+  // Set wrap around
+  this->NurbsSurfaceSource->SetWrapAround(node->GetWrapAround() - 1); // 0/NoWrap -> -1, 1/AlongU -> 0, 2/AlongV -> 1
+
   // Set markup control points to the surface source
   vtkNew<vtkPoints> controlPoints;
   controlPoints->SetNumberOfPoints(gridResolution[0] * gridResolution[1]);

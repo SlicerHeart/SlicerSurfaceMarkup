@@ -89,8 +89,8 @@ public slots:
 protected slots:
   /// Internal function to update the widgets based on the Grid Surface node
   //void onMRMLNodeModified();
-  /// Internal function to update type of Grid Surface
-  void onGridSurfaceTypeParameterChanged();
+  /// Internal function to update type and other properties of Grid Surface
+  void onGridSurfaceParameterChanged();
   /// Handle apply grid surface button click
   void onApplyGridResolution();
 

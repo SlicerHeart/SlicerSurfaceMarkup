@@ -80,6 +80,7 @@ void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
 
   os << "Delta: " << this->Delta << "\n";
   os << "Use centripetal: " << this->UseCentripetal << "\n";
+  os << "Wrap around: " << this->WrapAround << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -173,6 +174,12 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
     return;
   }
 
+  // Account for points included for wrapping around
+  int interpolatingOverlap[2] = {0};
+  this->GetInterpolatingOverlap(interpolatingOverlap);
+  int interpolatingGridResolution[2] = {0};
+  this->GetInterpolatingGridResolution(interpolatingGridResolution);
+  
   // Get parameter arrays in the two directions
   vtkNew<vtkDoubleArray> ukParams;
   vtkNew<vtkDoubleArray> vlParams;
@@ -180,20 +187,20 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
 
   // Compute knot vectors
   vtkNew<vtkDoubleArray> uKnots;
-  this->ComputeKnotVector(this->InterpolationDegrees[0], this->InputResolution[0], ukParams, uKnots);
+  this->ComputeKnotVector(this->InterpolationDegrees[0], interpolatingGridResolution[0], ukParams, uKnots);
   vtkNew<vtkDoubleArray> vKnots;
-  this->ComputeKnotVector(this->InterpolationDegrees[1], this->InputResolution[1], vlParams, vKnots);
+  this->ComputeKnotVector(this->InterpolationDegrees[1], interpolatingGridResolution[1], vlParams, vKnots);
 
   //
   // Do global interpolation along the u direction
   //
   vtkNew<vtkPoints> controlPointsR;
-  double** matrixA = this->AllocateMatrix(this->InputResolution[0]);
-  for (int v=0; v<this->InputResolution[1]; ++v)
+  double** matrixA = this->AllocateMatrix(interpolatingGridResolution[0]);
+  for (int v = -interpolatingOverlap[1]; v < this->InputResolution[1] + interpolatingOverlap[1]; ++v)
   {
     // Collect column point indices
     vtkNew<vtkPoints> points;
-    for (int u=0; u<this->InputResolution[0]; ++u)
+    for (int u = -interpolatingOverlap[0]; u < this->InputResolution[0] + interpolatingOverlap[0]; ++u)
     {
       points->InsertNextPoint(inputPoints->GetPoint(this->GetPointIndexUV(u,v)));
     }
@@ -201,30 +208,31 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
     this->BuildCoeffMatrix(this->InterpolationDegrees[0], uKnots, ukParams, points, matrixA);
 
     // Insert control points for each point column
-    this->LuSolve(matrixA, this->InputResolution[0], points, controlPointsR);
+    this->LuSolve(matrixA, interpolatingGridResolution[0], points, controlPointsR);
   }
-  this->DestructMatrix(matrixA, this->InputResolution[0]);
+  this->DestructMatrix(matrixA, interpolatingGridResolution[0]);
 
   //
   // Do global interpolation along the v direction
   //
   vtkNew<vtkPoints> controlPoints;
-  matrixA = this->AllocateMatrix(this->InputResolution[1]);
-  for (int u=0; u<this->InputResolution[0]; ++u)
+  matrixA = this->AllocateMatrix(interpolatingGridResolution[1]);
+  for (int u = -interpolatingOverlap[0]; u < this->InputResolution[0] + interpolatingOverlap[0]; ++u)
   {
     // Collect row point indices
     vtkNew<vtkPoints> points;
-    for (int v=0; v<this->InputResolution[1]; ++v)
+    for (int v = -interpolatingOverlap[1]; v < this->InputResolution[1] + interpolatingOverlap[1]; ++v)
     {
-      points->InsertNextPoint(controlPointsR->GetPoint(v * this->InputResolution[0] + u));
+      int controlPointRIndex = (v + interpolatingOverlap[1]) * interpolatingGridResolution[0] + (u + interpolatingOverlap[0]);
+      points->InsertNextPoint(controlPointsR->GetPoint(controlPointRIndex));
     }
 
     this->BuildCoeffMatrix(this->InterpolationDegrees[1], vKnots, vlParams, points, matrixA);
 
     // Insert control points for each point row
-    this->LuSolve(matrixA, this->InputResolution[1], points, controlPoints);
+    this->LuSolve(matrixA, interpolatingGridResolution[1], points, controlPoints);
   }
-  this->DestructMatrix(matrixA, this->InputResolution[1]);
+  this->DestructMatrix(matrixA, interpolatingGridResolution[1]);
 
   //
   // Evaluate surface
@@ -333,14 +341,17 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   vtkNew<vtkDoubleArray> knotsV;
   this->LinSpace(minLinSpace, maxLinSpace, sampleSizeV, knotsV);
 
+  int interpolatingGridResolution[2] = {0};
+  this->GetInterpolatingGridResolution(interpolatingGridResolution);
+
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;
-  this->FindSpans(this->InterpolationDegrees[0], uKnots, this->InputResolution[0], knotsU, uSpans);
+  this->FindSpans(this->InterpolationDegrees[0], uKnots, interpolatingGridResolution[0], knotsU, uSpans);
   this->BasisFunctions(this->InterpolationDegrees[0], uKnots, uSpans, knotsU, uBasis);
 
   vtkNew<vtkIntArray> vSpans;
   vtkNew<vtkDoubleArray> vBasis;
-  this->FindSpans(this->InterpolationDegrees[1], vKnots, this->InputResolution[1], knotsV, vSpans);
+  this->FindSpans(this->InterpolationDegrees[1], vKnots, interpolatingGridResolution[1], knotsV, vSpans);
   this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knotsV, vBasis);
 
   outEvalPoints->Initialize();
@@ -356,7 +367,7 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
         double temp[3] = {0.0};
         for (int l=0; l<this->InterpolationDegrees[1]+1; ++l)
         {
-          double* controlPoint = controlPoints->GetPoint(idxV + l + (this->InputResolution[1] * (idxU + k)));
+          double* controlPoint = controlPoints->GetPoint(idxV + l + (interpolatingGridResolution[1] * (idxU + k)));
           for (int d=0; d<dimension; ++d)
           {
             temp[d] = temp[d] + vBasis->GetValue(j * (this->InterpolationDegrees[1]+1) + l) * controlPoint[d];
@@ -367,6 +378,7 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
           spt[d] = spt[d] + uBasis->GetValue(i * (this->InterpolationDegrees[0]+1) + k) * temp[d];
         }
       }
+//TODO: This will overlap!
       outEvalPoints->InsertNextPoint(spt);
     }
   }
@@ -419,13 +431,19 @@ void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkPoints* inputPoints, vtkDoub
   //
   // return uk, vl
 
+  // Account for points included for wrapping around
+  int interpolatingOverlap[2] = {0};
+  this->GetInterpolatingOverlap(interpolatingOverlap);
+  int interpolatingGridResolution[2] = {0};
+  this->GetInterpolatingGridResolution(interpolatingGridResolution);
+
   // Compute parameters for each curve on the v direction. Concatenate into one parameter array
   vtkNew<vtkDoubleArray> ukParamsTemp;
-  for (int v=0; v<this->InputResolution[1]; ++v)
+  for (int v = -interpolatingOverlap[1]; v < this->InputResolution[1] + interpolatingOverlap[1]; ++v)
   {
     // Collect column point indices
     vtkNew<vtkIdList> columnIds;
-    for (int u=0; u<this->InputResolution[0]; ++u)
+    for (int u = -interpolatingOverlap[0]; u < this->InputResolution[0] + interpolatingOverlap[0]; ++u)
     {
       columnIds->InsertNextId(this->GetPointIndexUV(u,v));
     }
@@ -436,23 +454,23 @@ void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkPoints* inputPoints, vtkDoub
 
   // Do averaging on the u direction
   ukParams->Initialize();
-  for (int u=0; u<this->InputResolution[0]; ++u)
+  for (int u = 0; u < interpolatingGridResolution[0]; ++u)
   {
     double sumKnots_v = 0.0;
-    for (int v=0; v<this->InputResolution[1]; ++v)
+    for (int v = 0; v < interpolatingGridResolution[1]; ++v)
     {
-      sumKnots_v += ukParamsTemp->GetValue(u + (this->InputResolution[0] * v));
+      sumKnots_v += ukParamsTemp->GetValue(u + (interpolatingGridResolution[0] * v));
     }
-    ukParams->InsertNextValue(sumKnots_v / this->InputResolution[1]);
+    ukParams->InsertNextValue(sumKnots_v / interpolatingGridResolution[1]);
   }
 
   // Compute parameters for each curve on the u direction. Concatenate into one parameter array
   vtkNew<vtkDoubleArray> vlParamsTemp;
-  for (int u=0; u<this->InputResolution[0]; ++u)
+  for (int u = -interpolatingOverlap[0]; u < this->InputResolution[0] + interpolatingOverlap[0]; ++u)
   {
     // Collect row point indices
     vtkNew<vtkIdList> rowIds;
-    for (int v=0; v<this->InputResolution[1]; ++v)
+    for (int v = -interpolatingOverlap[1]; v < this->InputResolution[1] + interpolatingOverlap[1]; ++v)
     {
       rowIds->InsertNextId(this->GetPointIndexUV(u,v));
     }
@@ -463,14 +481,14 @@ void vtkNURBSSurfaceSource::ComputeParamsSurface(vtkPoints* inputPoints, vtkDoub
 
   // Do averaging on the v direction
   vlParams->Initialize();
-  for (int v=0; v<this->InputResolution[1]; ++v)
+  for (int v = 0; v < interpolatingGridResolution[1]; ++v)
   {
     double sumKnots_u = 0.0;
-    for (int u=0; u<this->InputResolution[0]; ++u)
+    for (int u = 0; u < interpolatingGridResolution[0]; ++u)
     {
-      sumKnots_u += vlParamsTemp->GetValue(v + (this->InputResolution[1] * u));
+      sumKnots_u += vlParamsTemp->GetValue(v + (interpolatingGridResolution[1] * u));
     }
-    vlParams->InsertNextValue(sumKnots_u / this->InputResolution[0]);
+    vlParams->InsertNextValue(sumKnots_u / interpolatingGridResolution[0]);
   }
 }
 
@@ -1166,15 +1184,71 @@ void vtkNURBSSurfaceSource::LinSpace(double start, double stop, int numOfSamples
 //
 
 //---------------------------------------------------------------------------
-unsigned int vtkNURBSSurfaceSource::GetPointIndexUV(unsigned int u, unsigned int v)
+unsigned int vtkNURBSSurfaceSource::GetPointIndexUV(int u, int v)
 {
-  if (u >= this->InputResolution[0] || v >= this->InputResolution[1])
+  int interpolatingOverlap[2] = {0};
+  this->GetInterpolatingOverlap(interpolatingOverlap);
+
+  if ( u < -interpolatingOverlap[0] || v < -interpolatingOverlap[1] ||
+       u >= this->InputResolution[0] + interpolatingOverlap[0] || v >= this->InputResolution[1] + interpolatingOverlap[1] )
   {
     vtkErrorMacro("GetPointUV: Index pair (" << u << ", " << v << ") is out of range");
     return -1;
   }
 
+  if (u < 0)
+  {
+    u += this->InputResolution[0];
+  }
+  else if (u >= this->InputResolution[0])
+  {
+    u -= this->InputResolution[0];
+  }
+
+  if (v < 0)
+  {
+    v += this->InputResolution[1];
+  }
+  else if (v >= this->InputResolution[1])
+  {
+    v -= this->InputResolution[1];
+  }
+
   return u * this->InputResolution[1] + v;
+}
+
+//---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::GetInterpolatingGridResolution(int (&resolutionUV)[2])
+{
+  int interpolatingOverlap[2] = {0};
+  this->GetInterpolatingOverlap(interpolatingOverlap);
+
+  resolutionUV[0] = this->InputResolution[0] + 2 * interpolatingOverlap[0];
+  resolutionUV[1] = this->InputResolution[1] + 2 * interpolatingOverlap[1];
+}
+
+//---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::GetInterpolatingOverlap(int (&overlapUV)[2])
+{
+  if (this->WrapAround == 0) // Along u
+  {
+    overlapUV[0] = (int)((this->InterpolationDegrees[0] - 1) / 2.0);
+    overlapUV[1] = 0;
+  }
+  else if (this->WrapAround == 1) // Along v
+  {
+    overlapUV[0] = 0;
+    overlapUV[1] = (int)((this->InterpolationDegrees[1] - 1) / 2.0);
+  }
+  else // Disabled
+  {
+    overlapUV[0] = 0;
+    overlapUV[1] = 0;
+    if (this->WrapAround != -1) // Valid value for disabled
+    {
+      vtkErrorMacro("GetInterpolatingOverlap: Invalid WrapAround value " << this->WrapAround << ". Valid values are -1 (disabled), 0 (along u), 1 (along v)");
+    }
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -1214,3 +1288,4 @@ void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSiz
   sampleSizeU = samplesPerGridCell * this->InputResolution[0];
   sampleSizeV = samplesPerGridCell * this->InputResolution[1];
 }
+

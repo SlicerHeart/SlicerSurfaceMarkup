@@ -94,13 +94,27 @@ public:
     //ThinPlate,
     GridSurfaceType_Last
     };
-
   /// GridSurfaceType represents the method that is used to calculate the size of the ROI.
   /// BOX ROI does not require control points to define a region, while the size of a BOUNDING_BOX ROI will be defined by the control points.
   vtkGetMacro(GridSurfaceType, int);
   void SetGridSurfaceType(int gridSurfaceType);
   static const char* GetGridSurfaceTypeAsString(int gridSurfaceType);
   static int GetGridSurfaceTypeFromString(const char* gridSurfaceType);
+
+  // Wrap around enum defines if the surface is wrapped around and if yes along which axis
+  enum
+    {
+    NoWrap,
+    AlongU,
+    AlongV,
+    WrapAround_Last
+    };
+  /// GridSurfaceType represents the method that is used to calculate the size of the ROI.
+  /// BOX ROI does not require control points to define a region, while the size of a BOUNDING_BOX ROI will be defined by the control points.
+  vtkGetMacro(WrapAround, int);
+  void SetWrapAround(int wrapAround);
+  static const char* GetWrapAroundAsString(int wrapAround);
+  static int GetWrapAroundFromString(const char* wrapAround);
 
   ///@{
   /// Number of control points on each side of the grid
@@ -130,7 +144,7 @@ public:
   vtkMRMLModelNode* GetOutputSurfaceModelNode();
 
 protected:
-  int GridSurfaceType{vtkMRMLMarkupsGridSurfaceNode::NURBS};
+  int GridSurfaceType { vtkMRMLMarkupsGridSurfaceNode::NURBS };
 
   static const char* OutputSurfaceModelNodeReferenceRole;
   static const char* OutputSurfaceModelNodeReferenceMRMLAttributeName;
@@ -144,6 +158,10 @@ protected:
   /// Valid values are [0.0, 0.5]. 0 by default.
   /// Note: Only some surface sources support this, such as NURBS.
   double ExpansionFactor = 0.0;
+
+  /// Determine whether to connect two opposing edges of the grid thus creating a cylinder-like surface.
+  /// Note: Only some surface sources support this, such as NURBS.
+  int WrapAround { vtkMRMLMarkupsGridSurfaceNode::NoWrap };
 
   /// In order to be able to resample to a new grid resolution after a change.
   int PreviousGridResolution[2] { 0, 0 };

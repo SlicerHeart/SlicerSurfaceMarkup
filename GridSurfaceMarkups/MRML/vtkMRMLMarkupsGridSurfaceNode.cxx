@@ -120,8 +120,8 @@ const char* vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(int gridSu
     return "NURBS";
   case vtkMRMLMarkupsGridSurfaceNode::Bezier:
     return "Bezier";
-    //case vtkMRMLMarkupsGridSurfaceNode::ThinPlate:
-    //  return "ThinPlate";
+  //case vtkMRMLMarkupsGridSurfaceNode::ThinPlate:
+  //  return "ThinPlate";
   default:
     // invalid id
     return "Invalid";
@@ -139,6 +139,57 @@ int vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeFromString(const char* name
   for (int i = 0; i < vtkMRMLMarkupsGridSurfaceNode::GridSurfaceType_Last; i++)
   {
     if (strcmp(name, vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(i)) == 0)
+    {
+      // found a matching name
+      return i;
+    }
+  }
+  // unknown name
+  return -1;
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::SetWrapAround(int wrapAround)
+{
+  if (this->WrapAround == wrapAround)
+  {
+    return;
+  }
+
+  this->WrapAround = wrapAround;
+
+  this->UpdateGridSurfaceFromControlPoints();
+  this->Modified();
+}
+
+//----------------------------------------------------------------------------
+const char* vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundAsString(int wrapAround)
+{
+  switch (wrapAround)
+  {
+  case vtkMRMLMarkupsGridSurfaceNode::NoWrap:
+    return "No wrap";
+  case vtkMRMLMarkupsGridSurfaceNode::AlongU:
+    return "Along u axis";
+  case vtkMRMLMarkupsGridSurfaceNode::AlongV:
+    return "Along v axis";
+  default:
+    // invalid id
+    return "Invalid";
+  }
+}
+
+//-----------------------------------------------------------
+int vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundFromString(const char* name)
+{
+  if (name == nullptr)
+  {
+    // invalid name
+    return -1;
+  }
+  for (int i = 0; i < vtkMRMLMarkupsGridSurfaceNode::WrapAround_Last; i++)
+  {
+    if (strcmp(name, vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundAsString(i)) == 0)
     {
       // found a matching name
       return i;

@@ -61,9 +61,9 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   void PrintSelf(ostream &os, vtkIndent indent);
 
   /// Set resolution of the input control point grid (u x v)
-  vtkSetVector2Macro(InputResolution, unsigned int);
+  vtkSetVector2Macro(InputResolution, int);
   /// Get resolution of the input control point grid (u x v)
-  vtkGetVector2Macro(InputResolution, unsigned int);
+  vtkGetVector2Macro(InputResolution, int);
   /// Set interpolation degrees
   vtkSetVector2Macro(InterpolationDegrees, unsigned int);
   /// Get interpolation degrees
@@ -78,6 +78,10 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   vtkSetMacro(ExpansionFactor, double);
   /// Get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
   vtkGetMacro(ExpansionFactor, double);
+  /// Set variable determining whether to connect two opposing edges of the grid thus creating a cylinder-like surface. Disabled (-1) by default
+  vtkSetMacro(WrapAround, int);
+  /// Get flag determining whether to connect two opposing edges of the grid thus creating a cylinder-like surface. Disabled (-1) by default
+  vtkGetMacro(WrapAround, int);
   
 protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
@@ -141,7 +145,11 @@ protected:
   void LinSpace(double start, double stop, int numOfSamples, vtkDoubleArray* outSpace);
 
   /// Convenience function to get point index from input point list with the two (u,v) indices
-  unsigned int GetPointIndexUV(unsigned int u, unsigned int v);
+  unsigned int GetPointIndexUV(int u, int v);
+  /// Get effective interpolating grid resolution, which is different than the specified if \sa WrapAround is enabled.
+  void GetInterpolatingGridResolution(int (&resolutionUV)[2]);
+  /// Get interpolating overlap by which the input points are wrapped around if \sa WrapAround is enabled.
+  void GetInterpolatingOverlap(int (&overlapUV)[2]);
   /// Convenience function to allocate NxN matrix
   /// \param m Number of rows
   /// \param n Number of columns. If omitted it is considered a square mxm matrix
@@ -159,7 +167,8 @@ protected:
 
 protected:
   /// Number of input control points along the u and v directions, respectively
-  unsigned int InputResolution[2] = {4,4};
+  /// Note: Signed int so that there is no unsigned casting when negative values appear when wrap around is enabled.
+  int InputResolution[2] = {4,4};
   /// Degree of the output surface for the u and v directions, respectively
   unsigned int InterpolationDegrees[2] = {3,3};
 
@@ -174,6 +183,12 @@ protected:
   /// Expansion factor. The surface will overreach the edge control points by this fraction of its size.
   /// Valid values are [0.0, 0.5]. 0 by default.
   double ExpansionFactor = 0.0;
+
+  /// Determine whether to connect two opposing edges of the grid thus creating a cylinder-like surface.
+  /// -1: Wrap around is disabled
+  ///  0: The edge that will be wrapped around is the 'u' edge (for which grid size is determined in the first element \sa InputResolution)
+  ///  1: The edge that will be wrapped around is the 'v' edge (for which grid size is determined in the second element \sa InputResolution)
+  int WrapAround = -1;
 
  protected:
   vtkNURBSSurfaceSource();

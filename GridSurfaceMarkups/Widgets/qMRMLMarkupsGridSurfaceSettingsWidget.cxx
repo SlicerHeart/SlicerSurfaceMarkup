@@ -80,9 +80,16 @@ void qMRMLMarkupsGridSurfaceSettingsWidgetPrivate::setupUi(qMRMLMarkupsGridSurfa
     this->surfaceTypeComboBox->addItem(vtkMRMLMarkupsGridSurfaceNode::GetGridSurfaceTypeAsString(gridSurfaceType), gridSurfaceType);
   }
 
-  QObject::connect(this->surfaceTypeComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceTypeParameterChanged()));
+  this->wrapAroundComboBox->clear();
+  for (int wrapAround = 0; wrapAround < vtkMRMLMarkupsGridSurfaceNode::WrapAround_Last; ++wrapAround)
+  {
+    this->wrapAroundComboBox->addItem(vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundAsString(wrapAround), wrapAround);
+  }
+
+  QObject::connect(this->surfaceTypeComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->applyGridResolutionButton, SIGNAL(clicked()), q, SLOT(onApplyGridResolution()));
-  QObject::connect(this->modelNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), q, SLOT(onGridSurfaceTypeParameterChanged()));
+  QObject::connect(this->wrapAroundComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
+  QObject::connect(this->modelNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), q, SLOT(onGridSurfaceParameterChanged()));
   q->setEnabled(q->MarkupsNode != nullptr);
 }
 
@@ -154,6 +161,10 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::updateWidgetFromMRML()
   d->gridResolutionSpinBox_Y->setValue(gridResolution[1]);
   d->gridResolutionSpinBox_Y->blockSignals(wasBlocked);
 
+  wasBlocked = d->wrapAroundComboBox->blockSignals(true);
+  d->wrapAroundComboBox->setCurrentIndex(d->wrapAroundComboBox->findData(markupsGridSurfaceNode->GetWrapAround()));
+  d->wrapAroundComboBox->blockSignals(wasBlocked);
+
   vtkMRMLModelNode* modelNode = markupsGridSurfaceNode->GetOutputSurfaceModelNode();
   wasBlocked = d->modelNodeSelector->blockSignals(true);
   d->modelNodeSelector->setCurrentNode(modelNode);
@@ -161,7 +172,7 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::updateWidgetFromMRML()
 }
 
 //-----------------------------------------------------------------------------
-void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceTypeParameterChanged()
+void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceParameterChanged()
 {
   Q_D(qMRMLMarkupsGridSurfaceSettingsWidget);
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(this->MarkupsNode);
@@ -169,8 +180,16 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceTypeParameterChanged()
   {
     return;
   }
+
   MRMLNodeModifyBlocker blocker(gridSurfaceNode);
+
+  // Set surface type
   gridSurfaceNode->SetGridSurfaceType(d->surfaceTypeComboBox->currentData().toInt());
+
+  // Set wrapping around
+  gridSurfaceNode->SetWrapAround(d->wrapAroundComboBox->currentData().toInt());
+
+  // Set output model
   vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast(d->modelNodeSelector->currentNode());
   if (modelNode)
   {
