@@ -191,13 +191,6 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceParameterChanged()
 
   // Set output model
   vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast(d->modelNodeSelector->currentNode());
-  if (modelNode)
-  {
-    modelNode->CreateDefaultDisplayNodes();
-    modelNode->SetDisplayVisibility(true);
-    // Prevent control point snapping on the output surface
-    modelNode->SetSelectable(false);
-  }
   gridSurfaceNode->SetOutputSurfaceModelNodeID(modelNode ? modelNode->GetID() : "");
 }
 

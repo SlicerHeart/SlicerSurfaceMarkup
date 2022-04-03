@@ -248,6 +248,16 @@ void vtkMRMLMarkupsGridSurfaceNode::SetOutputSurfaceModelNodeID(const char* mode
   }
 
   this->SetNodeReferenceID(this->GetOutputSurfaceModelNodeReferenceRole(), modelNodeId);
+
+  vtkMRMLModelNode* newOutputSurfaceModelNode = this->GetOutputSurfaceModelNode();
+  if (newOutputSurfaceModelNode)
+  {
+    // Make sure new ourput surface is visible
+    newOutputSurfaceModelNode->CreateDefaultDisplayNodes();
+    newOutputSurfaceModelNode->SetDisplayVisibility(true);
+    // Prevent control point snapping on the output surface
+    newOutputSurfaceModelNode->SetSelectable(false);
+  }
 }
 
 //----------------------------------------------------------------------------
