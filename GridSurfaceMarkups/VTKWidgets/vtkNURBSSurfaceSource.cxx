@@ -69,15 +69,12 @@ void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkPolyDataAlgorithm::PrintSelf(os, indent);
 
-  /// Activate centripetal parametrization method. Default: false
-  bool UseCentripetal = false;
-
   os << "Input resolution: " << this->InputResolution[0] << ", " << this->InputResolution[1] << "\n";
   os << "Interpolation degrees: " << this->InterpolationDegrees[0] << ", " << this->InterpolationDegrees[1] << "\n";
 
   os << "Delta: " << this->Delta << "\n";
   os << "Use centripetal: " << this->UseCentripetal << "\n";
-  os << "Wrap around: " << this->WrapAround << "\n";
+  os << "Wrap around: " << vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundAsString(this->WrapAround) << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -352,13 +349,13 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   double maxLinSpaceU = 1.0 + this->ExpansionFactor;
   double minLinSpaceV = -this->ExpansionFactor;
   double maxLinSpaceV = 1.0 + this->ExpansionFactor;
-  if (this->WrapAround == 0)
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
   {
     // We leave the stitching face from the min side (arbitrary)
     minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / interpolatingGridResolution[0];
     maxLinSpaceU -= (double)interpolatingOverlap[0] / interpolatingGridResolution[0];
   }
-  else if (this->WrapAround == 1)
+  else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
   {
     // We leave the stitching face from the min side (arbitrary)
     minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / interpolatingGridResolution[1];
@@ -1257,12 +1254,12 @@ void vtkNURBSSurfaceSource::GetInterpolatingGridResolution(int (&resolutionUV)[2
 //---------------------------------------------------------------------------
 void vtkNURBSSurfaceSource::GetInterpolatingOverlap(int (&overlapUV)[2])
 {
-  if (this->WrapAround == 0) // Along u
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
   {
     overlapUV[0] = this->InterpolationDegrees[0] + 1;
     overlapUV[1] = 0;
   }
-  else if (this->WrapAround == 1) // Along v
+  else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
   {
     overlapUV[0] = 0;
     overlapUV[1] = this->InterpolationDegrees[1] + 1;
@@ -1271,9 +1268,9 @@ void vtkNURBSSurfaceSource::GetInterpolatingOverlap(int (&overlapUV)[2])
   {
     overlapUV[0] = 0;
     overlapUV[1] = 0;
-    if (this->WrapAround != -1) // Valid value for disabled
+    if (this->WrapAround != vtkMRMLMarkupsGridSurfaceNode::NoWrap) // Valid value for disabled
     {
-      vtkErrorMacro("GetInterpolatingOverlap: Invalid WrapAround value " << this->WrapAround << ". Valid values are -1 (disabled), 0 (along u), 1 (along v)");
+      vtkErrorMacro("GetInterpolatingOverlap: Invalid WrapAround value " << this->WrapAround);
     }
   }
 }

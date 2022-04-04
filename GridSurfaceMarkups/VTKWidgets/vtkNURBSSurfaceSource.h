@@ -41,6 +41,9 @@
 
 #include "vtkSlicerGridSurfaceMarkupsModuleVTKWidgetsExport.h"
 
+// GridSurface includes
+#include "vtkMRMLMarkupsGridSurfaceNode.h"  // For the WrapAround enum
+
 // VTK includes
 #include <vtkPolyDataAlgorithm.h>
 
@@ -93,7 +96,8 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   ///@}
 
   /// Set/get variable determining whether to connect two opposing edges of the grid
-  /// thus creating a cylinder-like surface.Disabled (-1) by default.
+  /// thus creating a cylinder-like surface. Disabled (NoWrap=0) by default.
+  /// \sa vtkMRMLMarkupsGridSurfaceNode::WrapAround
   ///@{
   vtkSetMacro(WrapAround, int);
   vtkGetMacro(WrapAround, int);
@@ -201,11 +205,11 @@ protected:
   double ExpansionFactor = 0.0;
 
   /// Determine whether to connect two opposing edges of the grid thus creating a cylinder-like surface.
-  /// -1: Wrap around is disabled
-  ///  0: The edge that will be wrapped around is the 'u' edge (for which grid size is determined in the first element \sa InputResolution)
-  ///  1: The edge that will be wrapped around is the 'v' edge (for which grid size is determined in the second element \sa InputResolution)
-  /// Note: Use integers instead of the enum to prevent the specific NURBS source to define the enum (currently in vtkMRMLMarkupsGridSurfaceNode)
-  int WrapAround = -1;
+  /// NoWrap: Wrap around is disabled (this is the default)
+  /// AlongU: The edge that will be wrapped around is the 'u' edge (for which grid size is determined in the first element \sa InputResolution)
+  /// AlongV: The edge that will be wrapped around is the 'v' edge (for which grid size is determined in the second element \sa InputResolution)
+  /// \sa vtkMRMLMarkupsGridSurfaceNode::WrapAround
+  int WrapAround { vtkMRMLMarkupsGridSurfaceNode::NoWrap };
 
  protected:
   vtkNURBSSurfaceSource();
