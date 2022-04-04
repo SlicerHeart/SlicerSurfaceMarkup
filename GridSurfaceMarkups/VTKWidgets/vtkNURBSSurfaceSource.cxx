@@ -43,10 +43,12 @@
 #include <vtkDoubleArray.h>
 #include <vtkExecutive.h>
 #include <vtkIdList.h>
+#include <vtkIntArray.h>
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 #include <vtkMath.h>
 #include <vtkObjectFactory.h>
+#include <vtkPointData.h>
 
 //-------------------------------------------------------------------------------
 vtkStandardNewMacro(vtkNURBSSurfaceSource);
@@ -66,11 +68,6 @@ vtkNURBSSurfaceSource::~vtkNURBSSurfaceSource()
 void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkPolyDataAlgorithm::PrintSelf(os, indent);
-
-  /// Evaluation delta.
-  /// Controls the number of surface points. The smaller the delta value, smoother the surface.
-  /// The number of interpolated points will be /sa InputResolution / Delta.
-  double Delta = 0.05;
 
   /// Activate centripetal parametrization method. Default: false
   bool UseCentripetal = false;
@@ -168,9 +165,14 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
     vtkErrorMacro("ComputeNurbsPolyData: No valid input point list is set");
     return;
   }
-  if (this->InputResolution[0] < 2 || this->InputResolution[1] < 2)
+  if (this->InterpolationDegrees[0] < 2 || this->InterpolationDegrees[1] < 2)
   {
-    vtkErrorMacro("ComputeNurbsPolyData: No valid input resolution is set");
+    vtkErrorMacro("ComputeNurbsPolyData: No valid interpolation degree is set - they need to be at least 2");
+    return;
+  }
+  if (this->InputResolution[0] < InterpolationDegrees[0] || this->InputResolution[1] < this->InterpolationDegrees[1])
+  {
+    vtkErrorMacro("ComputeNurbsPolyData: No valid input resolution is set - they need to be at least 2");
     return;
   }
 
@@ -244,20 +246,18 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   outputPolyData->SetPoints(evalPoints);
 
   // Triangulate
-  int sampleSizeU = 0, sampliSizeV = 0;
-  this->CalculateSampleSize(sampleSizeU, sampliSizeV);
-
+  int sampleSizeU = 0, sampleSizeV = 0;
+  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
   vtkNew<vtkCellArray> cells;
-
   for (unsigned int i=0; i<sampleSizeU-1; i++)
   {
-    for (unsigned int j=0; j<sampliSizeV-1; j++)
+    for (unsigned int j=0; j<sampleSizeV-1; j++)
     {
-      unsigned int base = i*sampliSizeV + j;
+      unsigned int base = i*sampleSizeV + j;
       unsigned int a = base;
       unsigned int b = base + 1;
-      unsigned int c = base + sampliSizeV + 1;
-      unsigned int d = base + sampliSizeV;
+      unsigned int c = base + sampleSizeV + 1;
+      unsigned int d = base + sampleSizeV;
       vtkIdType triangle[3] = {0};
 
       triangle[0] = c;
@@ -271,8 +271,16 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
       cells->InsertNextCell(3, triangle);
     }
   }
-
   outputPolyData->SetPolys(cells);
+
+  // Add point indices as scalar array for debugging purposes
+  //vtkNew<vtkIntArray> indexArray;
+  //indexArray->SetName("PointIndices");
+  //for (int i=0; i<evalPoints->GetNumberOfPoints(); ++i)
+  //{
+  //  indexArray->InsertNextValue(i);
+  //}
+  //outputPolyData->GetPointData()->AddArray(indexArray);
 }
 
 //---------------------------------------------------------------------------
@@ -334,15 +342,32 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   int dimension = 3; // We only work in three dimensions
   int pdimension = 2; // Parametric dimension
 
-  double minLinSpace = -this->ExpansionFactor;
-  double maxLinSpace = 1.0 + this->ExpansionFactor;
-  vtkNew<vtkDoubleArray> knotsU;
-  this->LinSpace(minLinSpace, maxLinSpace, sampleSizeU, knotsU);
-  vtkNew<vtkDoubleArray> knotsV;
-  this->LinSpace(minLinSpace, maxLinSpace, sampleSizeV, knotsV);
-
+  int interpolatingOverlap[2] = {0};
+  this->GetInterpolatingOverlap(interpolatingOverlap);
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
+
+  // Calculate parameter space to evaluate (expand / shrink, remove wrap around overlap)
+  double minLinSpaceU = -this->ExpansionFactor;
+  double maxLinSpaceU = 1.0 + this->ExpansionFactor;
+  double minLinSpaceV = -this->ExpansionFactor;
+  double maxLinSpaceV = 1.0 + this->ExpansionFactor;
+  if (this->WrapAround == 0)
+  {
+    // We leave the stitching face from the min side (arbitrary)
+    minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / interpolatingGridResolution[0];
+    maxLinSpaceU -= (double)interpolatingOverlap[0] / interpolatingGridResolution[0];
+  }
+  else if (this->WrapAround == 1)
+  {
+    // We leave the stitching face from the min side (arbitrary)
+    minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / interpolatingGridResolution[1];
+    maxLinSpaceV -= (double)interpolatingOverlap[1] / interpolatingGridResolution[1];
+  }
+  vtkNew<vtkDoubleArray> knotsU;
+  this->LinSpace(minLinSpaceU, maxLinSpaceU, sampleSizeU, knotsU);
+  vtkNew<vtkDoubleArray> knotsV;
+  this->LinSpace(minLinSpaceV, maxLinSpaceV, sampleSizeV, knotsV);
 
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;
@@ -353,6 +378,9 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   vtkNew<vtkDoubleArray> vBasis;
   this->FindSpans(this->InterpolationDegrees[1], vKnots, interpolatingGridResolution[1], knotsV, vSpans);
   this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knotsV, vBasis);
+
+  // Store first of the two overlapping sections separately in order to unify them afterwards
+  vtkNew<vtkPoints> firstOverlappingPoints;
 
   outEvalPoints->Initialize();
   for (int i=0; i<uSpans->GetNumberOfValues(); ++i)
@@ -378,10 +406,9 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
           spt[d] = spt[d] + uBasis->GetValue(i * (this->InterpolationDegrees[0]+1) + k) * temp[d];
         }
       }
-//TODO: This will overlap!
       outEvalPoints->InsertNextPoint(spt);
-    }
-  }
+    } // v direction
+  } // u direction
 }
 
 //---------------------------------------------------------------------------
@@ -1232,13 +1259,13 @@ void vtkNURBSSurfaceSource::GetInterpolatingOverlap(int (&overlapUV)[2])
 {
   if (this->WrapAround == 0) // Along u
   {
-    overlapUV[0] = (int)((this->InterpolationDegrees[0] - 1) / 2.0);
+    overlapUV[0] = this->InterpolationDegrees[0] + 1;
     overlapUV[1] = 0;
   }
   else if (this->WrapAround == 1) // Along v
   {
     overlapUV[0] = 0;
-    overlapUV[1] = (int)((this->InterpolationDegrees[1] - 1) / 2.0);
+    overlapUV[1] = this->InterpolationDegrees[1] + 1;
   }
   else // Disabled
   {
@@ -1284,8 +1311,10 @@ void vtkNURBSSurfaceSource::DestructMatrix(double** matrix, int m, int n/*=0*/)
 //---------------------------------------------------------------------------
 void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSizeV)
 {
-  int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
-  sampleSizeU = samplesPerGridCell * this->InputResolution[0];
-  sampleSizeV = samplesPerGridCell * this->InputResolution[1];
-}
+  int interpolatingGridResolution[2] = {0};
+  this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
+  int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+  sampleSizeU = samplesPerGridCell * (interpolatingGridResolution[0] - 1) + 1;
+  sampleSizeV = samplesPerGridCell * (interpolatingGridResolution[1] - 1) + 1;
+}

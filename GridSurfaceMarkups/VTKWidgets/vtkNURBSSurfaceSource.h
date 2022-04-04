@@ -64,24 +64,40 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   vtkSetVector2Macro(InputResolution, int);
   /// Get resolution of the input control point grid (u x v)
   vtkGetVector2Macro(InputResolution, int);
-  /// Set interpolation degrees
+
+  
+  ///@{
+  /// Set/get interpolation degrees
   vtkSetVector2Macro(InterpolationDegrees, unsigned int);
-  /// Get interpolation degrees
   vtkGetVector2Macro(InterpolationDegrees, unsigned int);
-  /// Set flag determining whether centripetal parametrization method is used. False by default
+  ///@}
+
+  ///@{
+  /// Set/get evaluation delta, which controls the number of surface points. The smaller the delta value, smoother the surface.
+  /// The number of interpolated points will be /sa InputResolution / Delta.
+  vtkSetMacro(Delta, double);
+  vtkGetMacro(Delta, double);
+  ///@}
+
+  ///@{
+  /// Set/get flag determining whether centripetal parametrization method is used. False by default.
   vtkSetMacro(UseCentripetal, bool);
-  /// Set flag determining whether centripetal parametrization method is used. False by default
   vtkBooleanMacro(UseCentripetal, bool);
-  /// Get flag determining whether centripetal parametrization method is used. False by default
   vtkGetMacro(UseCentripetal, bool);
-  /// Set expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
+  ///@}
+
+  ///@{
+  /// Set/get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
   vtkSetMacro(ExpansionFactor, double);
-  /// Get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
   vtkGetMacro(ExpansionFactor, double);
-  /// Set variable determining whether to connect two opposing edges of the grid thus creating a cylinder-like surface. Disabled (-1) by default
+  ///@}
+
+  /// Set/get variable determining whether to connect two opposing edges of the grid
+  /// thus creating a cylinder-like surface.Disabled (-1) by default.
+  ///@{
   vtkSetMacro(WrapAround, int);
-  /// Get flag determining whether to connect two opposing edges of the grid thus creating a cylinder-like surface. Disabled (-1) by default
   vtkGetMacro(WrapAround, int);
+  ///@}
   
 protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
@@ -175,7 +191,7 @@ protected:
   /// Evaluation delta.
   /// Controls the number of surface points. The smaller the delta value, smoother the surface.
   /// The number of interpolated points will be /sa InputResolution / Delta.
-  double Delta = 0.2;
+  double Delta = 0.1;
 
   /// Activate centripetal parametrization method. Default: false
   bool UseCentripetal = false;
@@ -188,6 +204,7 @@ protected:
   /// -1: Wrap around is disabled
   ///  0: The edge that will be wrapped around is the 'u' edge (for which grid size is determined in the first element \sa InputResolution)
   ///  1: The edge that will be wrapped around is the 'v' edge (for which grid size is determined in the second element \sa InputResolution)
+  /// Note: Use integers instead of the enum to prevent the specific NURBS source to define the enum (currently in vtkMRMLMarkupsGridSurfaceNode)
   int WrapAround = -1;
 
  protected:
