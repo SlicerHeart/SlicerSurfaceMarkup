@@ -306,10 +306,7 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
     return;
   }
 
-  int sampleSizeU = 0, sampleSizeV = 0;
-  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
   int dimension = 3; // We only work in three dimensions
-  int pdimension = 2; // Parametric dimension
 
   int interpolatingOverlap[2] = {0};
   this->GetInterpolatingOverlap(interpolatingOverlap);
@@ -317,22 +314,11 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
   // Calculate parameter space to evaluate (expand / shrink, remove wrap around overlap)
-  double minLinSpaceU = -this->ExpansionFactor;
-  double maxLinSpaceU = 1.0 + this->ExpansionFactor;
-  double minLinSpaceV = -this->ExpansionFactor;
-  double maxLinSpaceV = 1.0 + this->ExpansionFactor;
-  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
-  {
-    // We leave the stitching face from the min side (arbitrary)
-    minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
-    maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
-  }
-  else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
-  {
-    // We leave the stitching face from the min side (arbitrary)
-    minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1);
-    maxLinSpaceV -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
-  }
+  double minLinSpaceU = 0, maxLinSpaceU = 0, minLinSpaceV = 0, maxLinSpaceV = 0;
+  this->CalculateEvaluatedParameterSpace(minLinSpaceU, maxLinSpaceU, minLinSpaceV, maxLinSpaceV);
+  int sampleSizeU = 0, sampleSizeV = 0;
+  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
+
   vtkNew<vtkDoubleArray> knotsU;
   this->LinSpace(minLinSpaceU, maxLinSpaceU, sampleSizeU, knotsU);
   vtkNew<vtkDoubleArray> knotsV;
@@ -1362,16 +1348,61 @@ void vtkNURBSSurfaceSource::DestructMatrix(double** matrix, int m, int n/*=0*/)
 }
 
 //---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(
+  double& minLinSpaceU, double& maxLinSpaceU, double& minLinSpaceV, double& maxLinSpaceV)
+{
+  // Calculate parameter space to evaluate (expand / shrink, remove wrap around overlap)
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::NoWrap)
+  {
+    minLinSpaceU = -this->ExpansionFactor;
+    maxLinSpaceU = 1.0 + this->ExpansionFactor;
+    minLinSpaceV = -this->ExpansionFactor;
+    maxLinSpaceV = 1.0 + this->ExpansionFactor;
+  }
+  else
+  {
+    int interpolatingOverlap[2] = {0};
+    this->GetInterpolatingOverlap(interpolatingOverlap);
+    int interpolatingGridResolution[2] = {0};
+    this->GetInterpolatingGridResolution(interpolatingGridResolution);
+
+    if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
+    {
+      minLinSpaceU = 0.0; // Do not expand along the wrapped direction
+      maxLinSpaceU = 1.0;
+      minLinSpaceV = -this->ExpansionFactor;
+      maxLinSpaceV = 1.0 + this->ExpansionFactor;
+
+      // We leave the stitching face from the min side (arbitrary)
+      minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+      maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
+    }
+    else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
+    {
+      minLinSpaceU = -this->ExpansionFactor;
+      maxLinSpaceU = 1.0 + this->ExpansionFactor;
+      minLinSpaceV = 0.0; // Do not expand along the wrapped direction
+      maxLinSpaceV = 1.0;
+
+      // We leave the stitching face from the min side (arbitrary)
+      minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1);
+      maxLinSpaceV -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
 void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSizeV)
 {
-  //TODO: Need to consider ExpansionFactor and WrapAround for the sample size.
-  // More concretely need to calculate the linSpace (see EvaluateSurface) here and scale sample
-  // size based on the range of the new linear space (originally 0-1, after considering expansion
-  // or wrap around may be larger or smaller)
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
+  double minLinSpaceU = 0, maxLinSpaceU = 0, minLinSpaceV = 0, maxLinSpaceV = 0;
+  this->CalculateEvaluatedParameterSpace(minLinSpaceU, maxLinSpaceU, minLinSpaceV, maxLinSpaceV);
+  double linSpaceSizeU = maxLinSpaceU - minLinSpaceU;
+  double linSpaceSizeV = maxLinSpaceV - minLinSpaceV;
+
   int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
-  sampleSizeU = samplesPerGridCell * (interpolatingGridResolution[0] - 1) + 1;
-  sampleSizeV = samplesPerGridCell * (interpolatingGridResolution[1] - 1) + 1;
+  sampleSizeU = samplesPerGridCell * (int)((interpolatingGridResolution[0] - 1) * linSpaceSizeU + 0.5) + 1;
+  sampleSizeV = samplesPerGridCell * (int)((interpolatingGridResolution[1] - 1) * linSpaceSizeV + 0.5) + 1;
 }

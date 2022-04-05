@@ -180,6 +180,8 @@ protected:
   /// \param m Number of rows
   /// \param n Number of columns. If omitted it is considered a square mxm matrix
   void DestructMatrix(double** matrix, int m, int n=0);
+  /// Calculate parameter space to evaluate considering \sa ExpansionFactor and \sa WrapAround parameters
+  void CalculateEvaluatedParameterSpace(double& minLinSpaceU, double& maxLinSpaceU, double& minLinSpaceV, double& maxLinSpaceV);
   /// Calculate sample size as a function of \sa Delta
   void CalculateSampleSize(int& sampleSizeU, int& sampleSizeV);
 
