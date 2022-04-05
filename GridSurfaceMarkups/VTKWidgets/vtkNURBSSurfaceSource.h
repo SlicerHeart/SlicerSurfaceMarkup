@@ -109,6 +109,8 @@ protected:
 
   /// Evaluate surface: compute interpolated surface points from control points and knot vectors
   void EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
+  /// Triangulate evaluated surface points to complete the output surface
+  void TriangulateSurface(vtkPolyData* outputPolyData);
 
   /// \brief Compute uk and vl parameter vectors from input points
   /// The data points array has a row size of InputResolution[0] and column size of InputResolution[1] and it is 1-dimensional.

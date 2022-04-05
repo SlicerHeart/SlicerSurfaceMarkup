@@ -234,50 +234,22 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   this->DestructMatrix(matrixA, interpolatingGridResolution[1]);
 
   //
-  // Evaluate surface
+  // Construct surface
   //
   vtkNew<vtkPoints> evalPoints;
   this->EvaluateSurface(uKnots, vKnots, controlPoints, evalPoints);
-
-  // Fill output
   outputPolyData->SetPoints(evalPoints);
 
-  // Triangulate
-  int sampleSizeU = 0, sampleSizeV = 0;
-  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
-  vtkNew<vtkCellArray> cells;
-  for (unsigned int i=0; i<sampleSizeU-1; i++)
-  {
-    for (unsigned int j=0; j<sampleSizeV-1; j++)
-    {
-      unsigned int base = i*sampleSizeV + j;
-      unsigned int a = base;
-      unsigned int b = base + 1;
-      unsigned int c = base + sampleSizeV + 1;
-      unsigned int d = base + sampleSizeV;
-      vtkIdType triangle[3] = {0};
-
-      triangle[0] = c;
-      triangle[1] = b;
-      triangle[2] = a;
-      cells->InsertNextCell(3, triangle);
-
-      triangle[0] = d;
-      triangle[1] = c;
-      triangle[2] = a;
-      cells->InsertNextCell(3, triangle);
-    }
-  }
-  outputPolyData->SetPolys(cells);
+  this->TriangulateSurface(outputPolyData);
 
   // Add point indices as scalar array for debugging purposes
-  //vtkNew<vtkIntArray> indexArray;
-  //indexArray->SetName("PointIndices");
-  //for (int i=0; i<evalPoints->GetNumberOfPoints(); ++i)
-  //{
-  //  indexArray->InsertNextValue(i);
-  //}
-  //outputPolyData->GetPointData()->AddArray(indexArray);
+  vtkNew<vtkIntArray> indexArray;
+  indexArray->SetName("PointIndices");
+  for (int i=0; i<evalPoints->GetNumberOfPoints(); ++i)
+  {
+    indexArray->InsertNextValue(i);
+  }
+  outputPolyData->GetPointData()->AddArray(indexArray);
 }
 
 //---------------------------------------------------------------------------
@@ -352,14 +324,14 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
   {
     // We leave the stitching face from the min side (arbitrary)
-    minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / interpolatingGridResolution[0];
-    maxLinSpaceU -= (double)interpolatingOverlap[0] / interpolatingGridResolution[0];
+    minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+    maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
   }
   else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
   {
     // We leave the stitching face from the min side (arbitrary)
-    minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / interpolatingGridResolution[1];
-    maxLinSpaceV -= (double)interpolatingOverlap[1] / interpolatingGridResolution[1];
+    minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1);
+    maxLinSpaceV -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
   }
   vtkNew<vtkDoubleArray> knotsU;
   this->LinSpace(minLinSpaceU, maxLinSpaceU, sampleSizeU, knotsU);
@@ -406,6 +378,90 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
       outEvalPoints->InsertNextPoint(spt);
     } // v direction
   } // u direction
+}
+
+//---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::TriangulateSurface(vtkPolyData* outputPolyData)
+{
+  if (!outputPolyData)
+  {
+    vtkErrorMacro("TriangulateSurface: Invalid poly data given");
+    return;
+  }
+
+  int sampleSizeU = 0, sampleSizeV = 0;
+  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
+
+  vtkNew<vtkCellArray> cells;
+  for (unsigned int i=0; i<sampleSizeU-1; i++)
+  {
+    for (unsigned int j=0; j<sampleSizeV-1; j++)
+    {
+      unsigned int base = i*sampleSizeV + j;
+      unsigned int a = base;
+      unsigned int b = base + 1;
+      unsigned int c = base + sampleSizeV + 1;
+      unsigned int d = base + sampleSizeV;
+      vtkIdType triangle[3] = {0};
+
+      triangle[0] = c;
+      triangle[1] = b;
+      triangle[2] = a;
+      cells->InsertNextCell(3, triangle);
+
+      triangle[0] = d;
+      triangle[1] = c;
+      triangle[2] = a;
+      cells->InsertNextCell(3, triangle);
+    }
+  }
+
+  // Insert strip of triangles between the meeting wrapped around edges
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
+  {
+    for (unsigned int v=0; v<sampleSizeV-1; v++)
+    {
+      unsigned int base = v;
+      unsigned int a = base;
+      unsigned int b = base + 1;
+      unsigned int c = base + (sampleSizeU-1) * sampleSizeV + 1;
+      unsigned int d = base + (sampleSizeU-1) * sampleSizeV;
+      vtkIdType triangle[3] = {0};
+
+      triangle[0] = c;
+      triangle[1] = b;
+      triangle[2] = d;
+      cells->InsertNextCell(3, triangle);
+
+      triangle[0] = d;
+      triangle[1] = b;
+      triangle[2] = a;
+      cells->InsertNextCell(3, triangle);
+    }
+  }
+  else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
+  {
+    for (unsigned int u=0; u<sampleSizeU-1; u++)
+    {
+      unsigned int base = u*sampleSizeV;
+      unsigned int a = base;
+      unsigned int b = base + sampleSizeV;
+      unsigned int c = base + sampleSizeV * 2 - 1;
+      unsigned int d = base + sampleSizeV - 1;
+      vtkIdType triangle[3] = {0};
+
+      triangle[0] = c;
+      triangle[1] = b;
+      triangle[2] = d;
+      cells->InsertNextCell(3, triangle);
+
+      triangle[0] = d;
+      triangle[1] = b;
+      triangle[2] = a;
+      cells->InsertNextCell(3, triangle);
+    }
+  }
+  outputPolyData->SetPolys(cells);
 }
 
 //---------------------------------------------------------------------------
@@ -1308,6 +1364,10 @@ void vtkNURBSSurfaceSource::DestructMatrix(double** matrix, int m, int n/*=0*/)
 //---------------------------------------------------------------------------
 void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSizeV)
 {
+  //TODO: Need to consider ExpansionFactor and WrapAround for the sample size.
+  // More concretely need to calculate the linSpace (see EvaluateSurface) here and scale sample
+  // size based on the range of the new linear space (originally 0-1, after considering expansion
+  // or wrap around may be larger or smaller)
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
