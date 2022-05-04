@@ -1373,8 +1373,12 @@ void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(
       minLinSpaceV = -this->ExpansionFactor;
       maxLinSpaceV = 1.0 + this->ExpansionFactor;
 
-      // We leave the stitching face from the min side (arbitrary)
-      minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+      // Leave the stitching face from the min side (arbitrary side selection).
+      // Also leave two triangles worth of space for overreaching (which may happen when the spacing between the control points is very irregular)
+      //TODO: Try to fix the root cause instead, which is currently unknown (why having irregularly spaced points change the linear space that much)
+      int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+      double linSpaceUPerTriangle = 2.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell);
+      minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1) + linSpaceUPerTriangle * 2;
       maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
     }
     else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
@@ -1384,8 +1388,12 @@ void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(
       minLinSpaceV = 0.0; // Do not expand along the wrapped direction
       maxLinSpaceV = 1.0;
 
-      // We leave the stitching face from the min side (arbitrary)
-      minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1);
+      // Leave the stitching face from the min side (arbitrary side selection).
+      // Also leave two triangles worth of space for overreaching (which may happen when the spacing between the control points is very irregular)
+      //TODO: Try to fix the root cause instead, which is currently unknown (why having irregularly spaced points change the linear space that much)
+      int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+      double linSpaceVPerTriangle = 2.0 / ((interpolatingGridResolution[1] - 1) * samplesPerGridCell);
+      minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1) + linSpaceVPerTriangle * 2;
       maxLinSpaceV -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
     }
   }
