@@ -77,9 +77,61 @@ vtkMRMLMarkupsGridSurfaceNode::vtkMRMLMarkupsGridSurfaceNode()
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::WriteXML(ostream& of, int nIndent)
+{
+  Superclass::WriteXML(of,nIndent);
+
+  vtkMRMLWriteXMLBeginMacro(of);
+  vtkMRMLWriteXMLVectorMacro(gridResolution, GridResolution, int, 2);
+  vtkMRMLWriteXMLFloatMacro(expansionFactor, ExpansionFactor);
+  vtkMRMLWriteXMLEnumMacro(wrapAround, WrapAround);
+  vtkMRMLWriteXMLEndMacro();
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::ReadXMLAttributes(const char** atts)
+{
+  MRMLNodeModifyBlocker blocker(this);
+
+  Superclass::ReadXMLAttributes(atts);
+
+  vtkMRMLReadXMLBeginMacro(atts);
+  vtkMRMLReadXMLVectorMacro(gridResolution, GridResolution, int, 2);
+  vtkMRMLReadXMLFloatMacro(expansionFactor, ExpansionFactor);
+  vtkMRMLReadXMLEnumMacro(wrapAround, WrapAround);
+  vtkMRMLReadXMLEndMacro();
+
+  // In scenes created by Slicer version version 4.13.0 revision 30287 (built 2021-10-05).
+  // The value used to represent unlimited control points has been changed to -1.
+  if (this->MaximumNumberOfControlPoints == 0)
+    {
+    this->MaximumNumberOfControlPoints = -1;
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLMarkupsGridSurfaceNode::CopyContent(vtkMRMLNode* anode, bool deepCopy/*=true*/)
+{
+  MRMLNodeModifyBlocker blocker(this);
+  Superclass::CopyContent(anode, deepCopy);
+
+  vtkMRMLCopyBeginMacro(anode);
+  vtkMRMLCopyVectorMacro(GridResolution, int, 2);
+  vtkMRMLCopyFloatMacro(ExpansionFactor);
+  vtkMRMLCopyEnumMacro(WrapAround);
+  vtkMRMLCopyEndMacro();
+}
+
+//----------------------------------------------------------------------------
 void vtkMRMLMarkupsGridSurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   Superclass::PrintSelf(os,indent);
+
+  vtkMRMLPrintBeginMacro(os,indent);
+  vtkMRMLPrintVectorMacro(GridResolution, int, 2);
+  vtkMRMLPrintFloatMacro(ExpansionFactor);
+  vtkMRMLPrintEnumMacro(WrapAround);
+  vtkMRMLPrintEndMacro();
 }
 
 //---------------------------------------------------------------------------

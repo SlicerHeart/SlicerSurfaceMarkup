@@ -80,8 +80,15 @@ public:
   /// Get markup short name
   const char* GetDefaultNodeNamePrefix() override {return "GS";}
 
+  /// Read node attributes from XML file
+  void ReadXMLAttributes( const char** atts) override;
+
+  /// Write this node's information to a MRML file in XML format.
+  void WriteXML(ostream& of, int indent) override;
+
+  /// Copy node content (excludes basic data, such as name and node references).
   /// \sa vtkMRMLNode::CopyContent
-  vtkMRMLCopyContentDefaultMacro(vtkMRMLMarkupsGridSurfaceNode);
+  vtkMRMLCopyContentMacro(vtkMRMLMarkupsFiducialNode);
 
   void ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) override;
 
