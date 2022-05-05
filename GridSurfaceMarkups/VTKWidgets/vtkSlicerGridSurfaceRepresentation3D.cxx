@@ -373,6 +373,7 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
   this->NurbsSurfaceSource->SetWrapAround(node->GetWrapAround());
 
   // Set markup control points to the surface source
+  //TODO: Revisit if this is needed or only in case of the Bezier source
   vtkNew<vtkPoints> controlPoints;
   controlPoints->SetNumberOfPoints(gridResolution[0] * gridResolution[1]);
   if (node->GetNumberOfControlPoints() == gridResolution[0] * gridResolution[1])
@@ -410,25 +411,48 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
 }
 
 //-----------------------------------------------------------------------------
-void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode *node)
+void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode* node)
 {
   int gridResolution[2] = {0};
   node->GetGridResolution(gridResolution);
   if (node->GetNumberOfControlPoints() == gridResolution[0] * gridResolution[1])
   {
-    // Generate topology;
+    // Generate topology
     vtkSmartPointer<vtkCellArray> planeCells = vtkSmartPointer<vtkCellArray>::New();
     for (int i=0; i<gridResolution[0]-1; ++i)
     {
       for (int j=0; j<gridResolution[1]-1; ++j)
       {
-        vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
+        vtkNew<vtkPolyLine> polyLine;
         polyLine->GetPointIds()->SetNumberOfIds(5);
         polyLine->GetPointIds()->SetId(0, i*gridResolution[1] + j);
         polyLine->GetPointIds()->SetId(1, i*gridResolution[1] + j+1);
         polyLine->GetPointIds()->SetId(2, (i+1)*gridResolution[1] + j+1);
         polyLine->GetPointIds()->SetId(3, (i+1)*gridResolution[1] + j);
         polyLine->GetPointIds()->SetId(4, i*gridResolution[1] + j);
+        planeCells->InsertNextCell(polyLine);
+      }
+    }
+    // Draw closing lines when wrap around is enabled
+    if (node->GetWrapAround() == vtkMRMLMarkupsGridSurfaceNode::AlongU)
+    {
+      for (int j=0; j<gridResolution[1]; ++j)
+      {
+        vtkNew<vtkPolyLine> polyLine;
+        polyLine->GetPointIds()->SetNumberOfIds(2);
+        polyLine->GetPointIds()->SetId(0, j);
+        polyLine->GetPointIds()->SetId(1, (gridResolution[0]-1)*gridResolution[1]+j);
+        planeCells->InsertNextCell(polyLine);
+      }
+    }
+    else if (node->GetWrapAround() == vtkMRMLMarkupsGridSurfaceNode::AlongV)
+    {
+      for (int i=0; i<gridResolution[0]; ++i)
+      {
+        vtkNew<vtkPolyLine> polyLine;
+        polyLine->GetPointIds()->SetNumberOfIds(2);
+        polyLine->GetPointIds()->SetId(0, i*gridResolution[1]);
+        polyLine->GetPointIds()->SetId(1, (i+1)*gridResolution[1]-1);
         planeCells->InsertNextCell(polyLine);
       }
     }
@@ -446,6 +470,5 @@ void vtkSlicerGridSurfaceRepresentation3D::InitializeGridSurfaceControlPoints(in
   planeSource->SetResolution(resX - 1, resY - 1);
   planeSource->Update();
 
-  //this->GridSurfaceControlPointSet->GetPoints()->SetNumberOfPoints(resX * resY);
   this->GridSurfaceControlPointSet->SetPoints(planeSource->GetOutput()->GetPoints());
 }
