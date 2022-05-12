@@ -73,8 +73,9 @@ void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
   os << "Interpolation degrees: " << this->InterpolationDegrees[0] << ", " << this->InterpolationDegrees[1] << "\n";
 
   os << "Delta: " << this->Delta << "\n";
-  os << "Use centripetal: " << this->UseCentripetal << "\n";
+  os << "Use centripetal: " << (this->UseCentripetal ? "true" : "false") << "\n";
   os << "Wrap around: " << vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundAsString(this->WrapAround) << "\n";
+  os << "Iterative parameter cpace calculation: " << (this->IterativeParameterSpaceCalculation ? "true" : "false") << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -197,6 +198,19 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   this->DestructMatrix(matrixA, interpolatingGridResolution[1]);
 
   //
+  // Determine evaluated parameter space
+  //
+  std::array<double, 4> linSpace = {0.0};
+  if (this->IterativeParameterSpaceCalculation)
+  {
+    this->CalculateWrappedAroundParameterSpaceIterative(/*vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, */linSpace);
+  }
+  else
+  {
+    this->CalculateEvaluatedParameterSpace(linSpace);
+  }
+
+  //
   // Construct surface
   //
   vtkNew<vtkPoints> evalPoints;
@@ -232,15 +246,15 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
   // Calculate parameter space to evaluate (expand / shrink, remove wrap around overlap)
-  double minLinSpaceU = 0, maxLinSpaceU = 0, minLinSpaceV = 0, maxLinSpaceV = 0;
-  this->CalculateEvaluatedParameterSpace(minLinSpaceU, maxLinSpaceU, minLinSpaceV, maxLinSpaceV);
+  std::array<double, 4> linSpace = {0.0};
+  this->CalculateEvaluatedParameterSpace(linSpace);
   int sampleSizeU = 0, sampleSizeV = 0;
   this->CalculateSampleSize(sampleSizeU, sampleSizeV);
 
   vtkNew<vtkDoubleArray> knotsU;
-  this->LinSpace(minLinSpaceU, maxLinSpaceU, sampleSizeU, knotsU);
+  this->LinSpace(linSpace[0], linSpace[1], sampleSizeU, knotsU);
   vtkNew<vtkDoubleArray> knotsV;
-  this->LinSpace(minLinSpaceV, maxLinSpaceV, sampleSizeV, knotsV);
+  this->LinSpace(linSpace[2], linSpace[3], sampleSizeV, knotsV);
 
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;
@@ -253,7 +267,7 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knotsV, vBasis);
 
   // Store first of the two overlapping sections separately in order to unify them afterwards
-  vtkNew<vtkPoints> firstOverlappingPoints;
+  //vtkNew<vtkPoints> firstOverlappingPoints;
 
   outEvalPoints->Initialize();
   for (int i=0; i<uSpans->GetNumberOfValues(); ++i)
@@ -971,16 +985,15 @@ void vtkNURBSSurfaceSource::DestructMatrix(double** matrix, int m, int n/*=0*/)
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(
-  double& minLinSpaceU, double& maxLinSpaceU, double& minLinSpaceV, double& maxLinSpaceV)
+void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(std::array<double, 4>& outLinSpace)  // [minU, maxU, minV, maxV]
 {
   // Calculate parameter space to evaluate (expand / shrink, remove wrap around overlap)
   if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::NoWrap)
   {
-    minLinSpaceU = -this->ExpansionFactor;
-    maxLinSpaceU = 1.0 + this->ExpansionFactor;
-    minLinSpaceV = -this->ExpansionFactor;
-    maxLinSpaceV = 1.0 + this->ExpansionFactor;
+    outLinSpace[0] = -this->ExpansionFactor;
+    outLinSpace[1] = 1.0 + this->ExpansionFactor;
+    outLinSpace[2] = -this->ExpansionFactor;
+    outLinSpace[3] = 1.0 + this->ExpansionFactor;
   }
   else
   {
@@ -991,35 +1004,73 @@ void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(
 
     if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
     {
-      minLinSpaceU = 0.0; // Do not expand along the wrapped direction
-      maxLinSpaceU = 1.0;
-      minLinSpaceV = -this->ExpansionFactor;
-      maxLinSpaceV = 1.0 + this->ExpansionFactor;
+      outLinSpace[0] = 0.0; // Do not expand along the wrapped direction
+      outLinSpace[1] = 1.0;
+      outLinSpace[2] = -this->ExpansionFactor;
+      outLinSpace[3] = 1.0 + this->ExpansionFactor;
 
       // Leave the stitching face from the min side (arbitrary side selection).
       // Also leave two triangles worth of space for overreaching (which may happen when the spacing between the control points is very irregular)
-      //TODO: Try to fix the root cause instead, which is currently unknown (why having irregularly spaced points change the linear space that much)
       int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
       double linSpaceUPerTriangle = 2.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell);
-      minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1) + linSpaceUPerTriangle * 2;
-      maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
+      outLinSpace[0] += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1) + linSpaceUPerTriangle * 2;
+      outLinSpace[1] -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
     }
     else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
     {
-      minLinSpaceU = -this->ExpansionFactor;
-      maxLinSpaceU = 1.0 + this->ExpansionFactor;
-      minLinSpaceV = 0.0; // Do not expand along the wrapped direction
-      maxLinSpaceV = 1.0;
+      outLinSpace[0] = -this->ExpansionFactor;
+      outLinSpace[1] = 1.0 + this->ExpansionFactor;
+      outLinSpace[2] = 0.0; // Do not expand along the wrapped direction
+      outLinSpace[3] = 1.0;
 
       // Leave the stitching face from the min side (arbitrary side selection).
       // Also leave two triangles worth of space for overreaching (which may happen when the spacing between the control points is very irregular)
-      //TODO: Try to fix the root cause instead, which is currently unknown (why having irregularly spaced points change the linear space that much)
       int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
       double linSpaceVPerTriangle = 2.0 / ((interpolatingGridResolution[1] - 1) * samplesPerGridCell);
-      minLinSpaceV += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1) + linSpaceVPerTriangle * 2;
-      maxLinSpaceV -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
+      outLinSpace[2] += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1) + linSpaceVPerTriangle * 2;
+      outLinSpace[3] -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
     }
   }
+}
+
+//---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(/*vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, */std::array<double, 4>& outLinSpace)  // [minU, maxU, minV, maxV]
+{
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::NoWrap)
+  {
+    vtkWarningMacro("Wrap around is disabled. Use simple method to calculate evaluated parameter space.");
+    this->CalculateEvaluatedParameterSpace(outLinSpace);
+  }
+
+  //if (!uKnots || !vKnots)
+  //{
+  //  //TODO:
+  //  return;
+  //}
+
+  //TODO: Try to fix the root cause instead, which is currently unknown (why having irregularly spaced points change the linear space that much)
+
+  /*
+  //TODO:
+  minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+
+  int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
+  double linSpaceUPerSample = 1.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell + 1);
+  //TODO:
+  // - Evaluate point at minLinSpaceU
+  // - Start maxLinSpaceU from 1.0
+  //   - Evaluate point at maxLinSpaceU
+  //   - Calculate dot product of vectors...
+  //   - Stop when we just got past the point at minLinSpaceU (dot product turned)
+
+  // We leave the stitching face from the min side (arbitrary)
+  minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+  maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
+  */
+
+  //TODO: Use non-iterative function until iterative implemented
+  vtkWarningMacro("Iterative parameter space calculation not yet implemented! Using non-iterative method");
+  this->CalculateEvaluatedParameterSpace(outLinSpace);
 }
 
 //---------------------------------------------------------------------------
@@ -1028,12 +1079,18 @@ void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSiz
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
-  double minLinSpaceU = 0, maxLinSpaceU = 0, minLinSpaceV = 0, maxLinSpaceV = 0;
-  this->CalculateEvaluatedParameterSpace(minLinSpaceU, maxLinSpaceU, minLinSpaceV, maxLinSpaceV);
-  double linSpaceSizeU = maxLinSpaceU - minLinSpaceU;
-  double linSpaceSizeV = maxLinSpaceV - minLinSpaceV;
+  std::array<double, 4> linSpace = {0.0};
+  this->CalculateEvaluatedParameterSpace(linSpace);
+  double linSpaceSizeU = linSpace[1] - linSpace[0];
+  double linSpaceSizeV = linSpace[3] - linSpace[2];
 
-  int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
+  int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
   sampleSizeU = samplesPerGridCell * (int)((interpolatingGridResolution[0] - 1) * linSpaceSizeU + 0.5) + 1;
   sampleSizeV = samplesPerGridCell * (int)((interpolatingGridResolution[1] - 1) * linSpaceSizeV + 0.5) + 1;
+}
+
+//---------------------------------------------------------------------------
+int vtkNURBSSurfaceSource::GetNumberOfSamplesPerGridCell()
+{
+  return vtkMath::Floor((1.0 / this->Delta) + 0.5);
 }

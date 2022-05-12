@@ -102,6 +102,14 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   vtkSetMacro(WrapAround, int);
   vtkGetMacro(WrapAround, int);
   ///@}
+
+  /// Set/get variable determining whether to use iterative method for finding the evaluated
+  /// parameter space when \sa WrapAround is enabled. Disabled by default.
+  ///@{
+  vtkSetMacro(IterativeParameterSpaceCalculation, bool);
+  vtkBooleanMacro(IterativeParameterSpaceCalculation, bool);
+  vtkGetMacro(IterativeParameterSpaceCalculation, bool);
+  ///@}
   
 protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
@@ -174,16 +182,25 @@ protected:
   void GetInterpolatingOverlap(int (&overlapUV)[2]);
   /// Convenience function to allocate NxN matrix
   /// \param m Number of rows
-  /// \param n Number of columns. If omitted it is considered a square mxm matrix
+  /// \param n Number of columns. If omitted it is considered a square MxM matrix
   double** AllocateMatrix(int m, int n=0);
   /// Convenience function to delete NxN matrix
   /// \param m Number of rows
-  /// \param n Number of columns. If omitted it is considered a square mxm matrix
+  /// \param n Number of columns. If omitted it is considered a square MxM matrix
   void DestructMatrix(double** matrix, int m, int n=0);
+
   /// Calculate parameter space to evaluate considering \sa ExpansionFactor and \sa WrapAround parameters
-  void CalculateEvaluatedParameterSpace(double& minLinSpaceU, double& maxLinSpaceU, double& minLinSpaceV, double& maxLinSpaceV);
+  /// \param outLinSpace Linear space array [minU, maxU, minV, maxV]
+  void CalculateEvaluatedParameterSpace(std::array<double, 4>& outLinSpace);
+  /// Iteratively calculate parameter space to evaluate for \sa WrapAround cases so that meeting triangles do not overlap
+  ///TODO: Use knots to be able to do iterative determination due to the instability of the parameter space caused by uneven point spacing
+  ///      The knots are used to evauate a series of points in the hypothetical parameter space to find the place where the two ends meet when wrapping around is enabled
+  /// \param outLinSpace Linear space array [minU, maxU, minV, maxV]
+  void CalculateWrappedAroundParameterSpaceIterative(/*vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, */std::array<double, 4>& outLinSpace);
   /// Calculate sample size as a function of \sa Delta
   void CalculateSampleSize(int& sampleSizeU, int& sampleSizeV);
+  /// Calculate number of samples per grid cell
+  int GetNumberOfSamplesPerGridCell();
 
 protected:
   int FillInputPortInformation(int port, vtkInformation* info) override;
@@ -214,6 +231,10 @@ protected:
   /// AlongV: The edge that will be wrapped around is the 'v' edge (for which grid size is determined in the second element \sa InputResolution)
   /// \sa vtkMRMLMarkupsGridSurfaceNode::WrapAround
   int WrapAround { vtkMRMLMarkupsGridSurfaceNode::NoWrap };
+
+  /// Determine whether use iterative method for finding the evaluated
+  /// parameter space when \sa WrapAround is enabled. Disabled by default.
+  bool IterativeParameterSpaceCalculation;
 
  protected:
   vtkNURBSSurfaceSource();
