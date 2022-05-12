@@ -135,6 +135,14 @@ public:
   /// Get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
   vtkGetMacro(ExpansionFactor, double);
 
+  /// Set/get variable determining whether to use iterative method for finding the evaluated
+  /// parameter space when \sa WrapAround is enabled. Disabled by default.
+  ///@{
+  vtkSetMacro(IterativeParameterSpaceCalculation, bool);
+  vtkBooleanMacro(IterativeParameterSpaceCalculation, bool);
+  vtkGetMacro(IterativeParameterSpaceCalculation, bool);
+  ///@}
+
   //TODO:
   void UpdateGridSurfaceFromControlPoints();
   //TODO:
@@ -151,7 +159,7 @@ public:
   vtkMRMLModelNode* GetOutputSurfaceModelNode();
 
 protected:
-  int GridSurfaceType { vtkMRMLMarkupsGridSurfaceNode::NURBS };
+  int GridSurfaceType = vtkMRMLMarkupsGridSurfaceNode::NURBS;
 
   static const char* OutputSurfaceModelNodeReferenceRole;
   static const char* OutputSurfaceModelNodeReferenceMRMLAttributeName;
@@ -159,7 +167,7 @@ protected:
   bool IsUpdatingControlPointsFromGridSurface{false};
   bool IsUpdatingGridSurfaceFromControlPoints{false};
 
-  int GridResolution[2] { 4, 4 };
+  int GridResolution[2] = { 4, 4 };
 
   /// Expansion factor. The surface will overreach the edge control points by this fraction of its size.
   /// Valid values are [0.0, 0.5]. 0 by default.
@@ -168,10 +176,14 @@ protected:
 
   /// Determine whether to connect two opposing edges of the grid thus creating a cylinder-like surface.
   /// Note: Only some surface sources support this, such as NURBS.
-  int WrapAround { vtkMRMLMarkupsGridSurfaceNode::NoWrap };
+  int WrapAround = vtkMRMLMarkupsGridSurfaceNode::NoWrap;
+
+  /// Determine whether use iterative method for finding the evaluated parameter space
+  // when \sa WrapAround is enabled, if the selected source algorithm supports it. Disabled by default.
+  bool IterativeParameterSpaceCalculation = false;
 
   /// In order to be able to resample to a new grid resolution after a change.
-  int PreviousGridResolution[2] { 0, 0 };
+  int PreviousGridResolution[2] = { 0, 0 };
 
 protected:
   virtual const char* GetOutputSurfaceModelNodeReferenceMRMLAttributeName();

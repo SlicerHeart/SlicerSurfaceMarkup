@@ -203,7 +203,7 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   std::array<double, 4> linSpace = {0.0};
   if (this->IterativeParameterSpaceCalculation)
   {
-    this->CalculateWrappedAroundParameterSpaceIterative(/*vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, */linSpace);
+    this->CalculateWrappedAroundParameterSpaceIterative(uKnots, vKnots, controlPoints, linSpace);
   }
   else
   {
@@ -214,10 +214,10 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   // Construct surface
   //
   vtkNew<vtkPoints> evalPoints;
-  this->EvaluateSurface(uKnots, vKnots, controlPoints, evalPoints);
+  this->EvaluateSurface(linSpace, uKnots, vKnots, controlPoints, evalPoints);
   outputPolyData->SetPoints(evalPoints);
 
-  this->TriangulateSurface(outputPolyData);
+  this->TriangulateSurface(linSpace, outputPolyData);
 
   // Add point indices as scalar array for debugging purposes
   vtkNew<vtkIntArray> indexArray;
@@ -230,7 +230,7 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints)
+void vtkNURBSSurfaceSource::EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints)
 {
   if (this->Delta < 0.001)
   {
@@ -245,16 +245,13 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
-  // Calculate parameter space to evaluate (expand / shrink, remove wrap around overlap)
-  std::array<double, 4> linSpace = {0.0};
-  this->CalculateEvaluatedParameterSpace(linSpace);
-  int sampleSizeU = 0, sampleSizeV = 0;
-  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
+  std::array<unsigned int, 2> sampleSize = {0};
+  this->CalculateSampleSize(linSpace, sampleSize);
 
   vtkNew<vtkDoubleArray> knotsU;
-  this->LinSpace(linSpace[0], linSpace[1], sampleSizeU, knotsU);
+  this->LinSpace(linSpace[0], linSpace[1], sampleSize[0], knotsU);
   vtkNew<vtkDoubleArray> knotsV;
-  this->LinSpace(linSpace[2], linSpace[3], sampleSizeV, knotsV);
+  this->LinSpace(linSpace[2], linSpace[3], sampleSize[1], knotsV);
 
   vtkNew<vtkIntArray> uSpans;
   vtkNew<vtkDoubleArray> uBasis;
@@ -265,9 +262,6 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
   vtkNew<vtkDoubleArray> vBasis;
   this->FindSpans(this->InterpolationDegrees[1], vKnots, interpolatingGridResolution[1], knotsV, vSpans);
   this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knotsV, vBasis);
-
-  // Store first of the two overlapping sections separately in order to unify them afterwards
-  //vtkNew<vtkPoints> firstOverlappingPoints;
 
   outEvalPoints->Initialize();
   for (int i=0; i<uSpans->GetNumberOfValues(); ++i)
@@ -299,7 +293,7 @@ void vtkNURBSSurfaceSource::EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArr
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::TriangulateSurface(vtkPolyData* outputPolyData)
+void vtkNURBSSurfaceSource::TriangulateSurface(std::array<double, 4>& linSpace, vtkPolyData* outputPolyData)
 {
   if (!outputPolyData)
   {
@@ -307,19 +301,19 @@ void vtkNURBSSurfaceSource::TriangulateSurface(vtkPolyData* outputPolyData)
     return;
   }
 
-  int sampleSizeU = 0, sampleSizeV = 0;
-  this->CalculateSampleSize(sampleSizeU, sampleSizeV);
+  std::array<unsigned int, 2> sampleSize = {0};
+  this->CalculateSampleSize(linSpace, sampleSize);
 
   vtkNew<vtkCellArray> cells;
-  for (unsigned int i=0; i<sampleSizeU-1; i++)
+  for (unsigned int i=0; i<sampleSize[0]-1; i++)
   {
-    for (unsigned int j=0; j<sampleSizeV-1; j++)
+    for (unsigned int j=0; j<sampleSize[1]-1; j++)
     {
-      unsigned int base = i*sampleSizeV + j;
+      unsigned int base = i*sampleSize[1] + j;
       unsigned int a = base;
       unsigned int b = base + 1;
-      unsigned int c = base + sampleSizeV + 1;
-      unsigned int d = base + sampleSizeV;
+      unsigned int c = base + sampleSize[1] + 1;
+      unsigned int d = base + sampleSize[1];
       vtkIdType triangle[3] = {0};
 
       triangle[0] = c;
@@ -337,13 +331,13 @@ void vtkNURBSSurfaceSource::TriangulateSurface(vtkPolyData* outputPolyData)
   // Insert strip of triangles between the meeting wrapped around edges
   if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
   {
-    for (unsigned int v=0; v<sampleSizeV-1; v++)
+    for (unsigned int v=0; v<sampleSize[1]-1; v++)
     {
       unsigned int base = v;
       unsigned int a = base;
       unsigned int b = base + 1;
-      unsigned int c = base + (sampleSizeU-1) * sampleSizeV + 1;
-      unsigned int d = base + (sampleSizeU-1) * sampleSizeV;
+      unsigned int c = base + (sampleSize[0]-1) * sampleSize[1] + 1;
+      unsigned int d = base + (sampleSize[0]-1) * sampleSize[1];
       vtkIdType triangle[3] = {0};
 
       triangle[0] = c;
@@ -359,13 +353,13 @@ void vtkNURBSSurfaceSource::TriangulateSurface(vtkPolyData* outputPolyData)
   }
   else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
   {
-    for (unsigned int u=0; u<sampleSizeU-1; u++)
+    for (unsigned int u=0; u<sampleSize[0]-1; u++)
     {
-      unsigned int base = u*sampleSizeV;
+      unsigned int base = u*sampleSize[1];
       unsigned int a = base;
-      unsigned int b = base + sampleSizeV;
-      unsigned int c = base + sampleSizeV * 2 - 1;
-      unsigned int d = base + sampleSizeV - 1;
+      unsigned int b = base + sampleSize[1];
+      unsigned int c = base + sampleSize[1] * 2 - 1;
+      unsigned int d = base + sampleSize[1] - 1;
       vtkIdType triangle[3] = {0};
 
       triangle[0] = c;
@@ -1011,9 +1005,9 @@ void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(std::array<double, 
 
       // Leave the stitching face from the min side (arbitrary side selection).
       // Also leave two triangles worth of space for overreaching (which may happen when the spacing between the control points is very irregular)
-      int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
-      double linSpaceUPerTriangle = 2.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell);
-      outLinSpace[0] += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1) + linSpaceUPerTriangle * 2;
+      int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
+      double linSpaceUPerSample = 1.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell);
+      outLinSpace[0] += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1) + linSpaceUPerSample * 2;
       outLinSpace[1] -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
     }
     else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
@@ -1025,68 +1019,118 @@ void vtkNURBSSurfaceSource::CalculateEvaluatedParameterSpace(std::array<double, 
 
       // Leave the stitching face from the min side (arbitrary side selection).
       // Also leave two triangles worth of space for overreaching (which may happen when the spacing between the control points is very irregular)
-      int samplesPerGridCell = vtkMath::Floor((1.0 / this->Delta) + 0.5);
-      double linSpaceVPerTriangle = 2.0 / ((interpolatingGridResolution[1] - 1) * samplesPerGridCell);
-      outLinSpace[2] += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1) + linSpaceVPerTriangle * 2;
+      int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
+      double linSpaceVPerSample = 1.0 / ((interpolatingGridResolution[1] - 1) * samplesPerGridCell);
+      outLinSpace[2] += (double)(interpolatingOverlap[1] - 1) / (interpolatingGridResolution[1] - 1) + linSpaceVPerSample * 2;
       outLinSpace[3] -= (double)interpolatingOverlap[1] / (interpolatingGridResolution[1] - 1);
     }
   }
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(/*vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, */std::array<double, 4>& outLinSpace)  // [minU, maxU, minV, maxV]
+void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, std::array<double, 4>& outLinSpace)  // [minU, maxU, minV, maxV]
 {
   if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::NoWrap)
   {
     vtkWarningMacro("Wrap around is disabled. Use simple method to calculate evaluated parameter space.");
     this->CalculateEvaluatedParameterSpace(outLinSpace);
+    return;
   }
 
-  //if (!uKnots || !vKnots)
-  //{
-  //  //TODO:
-  //  return;
-  //}
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
+  {
+    /* TODO:
+    // Separate linear space ranges based on wrapping direction
+    int minLinSpace_Wrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[0] : outLinSpace[2]);
+    int maxLinSpace_Wrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[1] : outLinSpace[3]);
+    int minLinSpace_NonWrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[2] : outLinSpace[0]);
+    // Limit non-wrapping direction to one sample to speed up computation
+    int maxLinSpace_NonWrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[2] : outLinSpace[0]);
+    */
+    vtkWarningMacro("Iterative parameter space calculation not yet implemented if wrap around is along the V side! Using non-iterative method");
+    this->CalculateEvaluatedParameterSpace(outLinSpace);
+    return;
+  }
 
-  //TODO: Try to fix the root cause instead, which is currently unknown (why having irregularly spaced points change the linear space that much)
+  // Define lambda to calculate dot product
+  auto dotProduct = [](double v1[3], double v2[3]) -> double
+  { 
+    double product = 0.0;
+    for (int i=0; i<3; i++)
+    {
+      product += v1[i] * v2[i];
+    }
+    return product;
+  };
 
-  /*
-  //TODO:
-  minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+  int interpolatingOverlap[2] = {0};
+  this->GetInterpolatingOverlap(interpolatingOverlap);
+  int interpolatingGridResolution[2] = {0};
+  this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
+  std::array<double, 4> currentLinSpace = {0.0};
+  currentLinSpace[0] = (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
+  currentLinSpace[1] = 1.0;
+  currentLinSpace[2] = 0.0;  // Limit non-wrapping direction to one sample to speed up computation
+  currentLinSpace[3] = 0.0;
+
+  // Initially evaluate points between minLinSpaceU and 1.0 (End1) and store vector v_Start_End1
+  vtkNew<vtkPoints> evalPoints;
+  this->EvaluateSurface(currentLinSpace, uKnots, vKnots, controlPoints, evalPoints);
+  double pointStart[3] = {0.0};
+  evalPoints->GetPoint(0, pointStart);
+  double pointEnd1[3] = {0.0};
+  evalPoints->GetPoint(evalPoints->GetNumberOfPoints()-1, pointEnd1);
+  double vector_Start_End1[3] = { pointEnd1[0]-pointStart[0], pointEnd1[1]-pointStart[1], pointEnd1[2]-pointStart[2] };
+  double currentProduct = 1.0;  // Arbitrary initial positive value
+
+  // Calculate step size to decrease end point parameter space position
   int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
-  double linSpaceUPerSample = 1.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell + 1);
-  //TODO:
-  // - Evaluate point at minLinSpaceU
-  // - Start maxLinSpaceU from 1.0
-  //   - Evaluate point at maxLinSpaceU
-  //   - Calculate dot product of vectors...
-  //   - Stop when we just got past the point at minLinSpaceU (dot product turned)
+  double linSpaceUPerSample = 1.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell);
+  int maxNumberOfIterations = (interpolatingGridResolution[0] - interpolatingOverlap[0]) * samplesPerGridCell;
+  int currentIteration = 0;
 
-  // We leave the stitching face from the min side (arbitrary)
-  minLinSpaceU += (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
-  maxLinSpaceU -= (double)interpolatingOverlap[0] / (interpolatingGridResolution[0] - 1);
-  */
+  // While dot product of v_Start_End1 and current v_Start_CurrentEnd is positive
+  while (currentProduct >= 0.0 && currentIteration < maxNumberOfIterations)
+  {
+    // Decrease linear space end by step (keep start constant)
+    currentLinSpace[1] -= linSpaceUPerSample;
+    // Evaluate points in the current parametric space range, get point at the end (CurrentEnd)
+    this->EvaluateSurface(currentLinSpace, uKnots, vKnots, controlPoints, evalPoints);
+    double pointCurrentEnd[3] = {0.0};
+    evalPoints->GetPoint(evalPoints->GetNumberOfPoints()-1, pointCurrentEnd);
+    // Construct vector v_Start_CurrentEnd
+    double vector_Start_CurrentEnd[3] = { pointCurrentEnd[0]-pointStart[0], pointCurrentEnd[1]-pointStart[1], pointCurrentEnd[2]-pointStart[2] };
+    // Calculate dot product of vectors v_Start_End1 and current v_Start_CurrentEnd
+    currentProduct = dotProduct(vector_Start_End1, vector_Start_CurrentEnd);
+    currentIteration++;
+  }
 
-  //TODO: Use non-iterative function until iterative implemented
-  vtkWarningMacro("Iterative parameter space calculation not yet implemented! Using non-iterative method");
-  this->CalculateEvaluatedParameterSpace(outLinSpace);
+  if (currentIteration >= maxNumberOfIterations)
+  {
+    vtkErrorMacro("Iterative parameter space calculation failed! Using non-iterative method");
+    this->CalculateEvaluatedParameterSpace(outLinSpace);
+    return;
+  }
+
+  outLinSpace[0] = currentLinSpace[0];
+  outLinSpace[1] = currentLinSpace[1];
+  outLinSpace[2] = -this->ExpansionFactor;
+  outLinSpace[3] = 1.0 + this->ExpansionFactor;
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::CalculateSampleSize(int& sampleSizeU, int& sampleSizeV)
+void vtkNURBSSurfaceSource::CalculateSampleSize(std::array<double, 4>& linSpace, std::array<unsigned int, 2>& outSampleSize)
 {
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
-  std::array<double, 4> linSpace = {0.0};
-  this->CalculateEvaluatedParameterSpace(linSpace);
   double linSpaceSizeU = linSpace[1] - linSpace[0];
   double linSpaceSizeV = linSpace[3] - linSpace[2];
 
   int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
-  sampleSizeU = samplesPerGridCell * (int)((interpolatingGridResolution[0] - 1) * linSpaceSizeU + 0.5) + 1;
-  sampleSizeV = samplesPerGridCell * (int)((interpolatingGridResolution[1] - 1) * linSpaceSizeV + 0.5) + 1;
+  outSampleSize[0] = samplesPerGridCell * (int)((interpolatingGridResolution[0] - 1) * linSpaceSizeU + 0.5) + 1;
+  outSampleSize[1] = samplesPerGridCell * (int)((interpolatingGridResolution[1] - 1) * linSpaceSizeV + 0.5) + 1;
 }
 
 //---------------------------------------------------------------------------

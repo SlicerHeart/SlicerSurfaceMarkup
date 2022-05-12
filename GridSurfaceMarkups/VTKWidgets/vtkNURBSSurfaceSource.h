@@ -116,9 +116,9 @@ protected:
   void ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPolyData* outputPolyData);
 
   /// Evaluate surface: compute interpolated surface points from control points and knot vectors
-  void EvaluateSurface(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
+  void EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
   /// Triangulate evaluated surface points to complete the output surface
-  void TriangulateSurface(vtkPolyData* outputPolyData);
+  void TriangulateSurface(std::array<double, 4>& linSpace, vtkPolyData* outputPolyData);
 
   /// \brief Compute uk and vl parameter vectors from input points
   /// The data points array has a row size of InputResolution[0] and column size of InputResolution[1] and it is 1-dimensional.
@@ -196,9 +196,11 @@ protected:
   ///TODO: Use knots to be able to do iterative determination due to the instability of the parameter space caused by uneven point spacing
   ///      The knots are used to evauate a series of points in the hypothetical parameter space to find the place where the two ends meet when wrapping around is enabled
   /// \param outLinSpace Linear space array [minU, maxU, minV, maxV]
-  void CalculateWrappedAroundParameterSpaceIterative(/*vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, */std::array<double, 4>& outLinSpace);
+  void CalculateWrappedAroundParameterSpaceIterative(vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, std::array<double, 4>& outLinSpace);
   /// Calculate sample size as a function of \sa Delta
-  void CalculateSampleSize(int& sampleSizeU, int& sampleSizeV);
+  /// \param linSpace The parametric bounds of the evaluated linear space for which we want to calculate the sample size
+  /// \param outSampleSize Calculated sample size [sampleSizeU, sampleSizeV]
+  void CalculateSampleSize(std::array<double, 4>& linSpace, std::array<unsigned int, 2>& outSampleSize);
   /// Calculate number of samples per grid cell
   int GetNumberOfSamplesPerGridCell();
 
@@ -230,11 +232,11 @@ protected:
   /// AlongU: The edge that will be wrapped around is the 'u' edge (for which grid size is determined in the first element \sa InputResolution)
   /// AlongV: The edge that will be wrapped around is the 'v' edge (for which grid size is determined in the second element \sa InputResolution)
   /// \sa vtkMRMLMarkupsGridSurfaceNode::WrapAround
-  int WrapAround { vtkMRMLMarkupsGridSurfaceNode::NoWrap };
+  int WrapAround = vtkMRMLMarkupsGridSurfaceNode::NoWrap;
 
   /// Determine whether use iterative method for finding the evaluated
   /// parameter space when \sa WrapAround is enabled. Disabled by default.
-  bool IterativeParameterSpaceCalculation;
+  bool IterativeParameterSpaceCalculation = false;
 
  protected:
   vtkNURBSSurfaceSource();

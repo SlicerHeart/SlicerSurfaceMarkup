@@ -85,6 +85,7 @@ void vtkMRMLMarkupsGridSurfaceNode::WriteXML(ostream& of, int nIndent)
   vtkMRMLWriteXMLVectorMacro(gridResolution, GridResolution, int, 2);
   vtkMRMLWriteXMLFloatMacro(expansionFactor, ExpansionFactor);
   vtkMRMLWriteXMLEnumMacro(wrapAround, WrapAround);
+  vtkMRMLWriteXMLBooleanMacro(iterativeParameterSpaceCalculation, IterativeParameterSpaceCalculation);
   vtkMRMLWriteXMLEndMacro();
 }
 
@@ -99,6 +100,7 @@ void vtkMRMLMarkupsGridSurfaceNode::ReadXMLAttributes(const char** atts)
   vtkMRMLReadXMLVectorMacro(gridResolution, GridResolution, int, 2);
   vtkMRMLReadXMLFloatMacro(expansionFactor, ExpansionFactor);
   vtkMRMLReadXMLEnumMacro(wrapAround, WrapAround);
+  vtkMRMLReadXMLBooleanMacro(iterativeParameterSpaceCalculation, IterativeParameterSpaceCalculation);
   vtkMRMLReadXMLEndMacro();
 
   // In scenes created by Slicer version version 4.13.0 revision 30287 (built 2021-10-05).
@@ -119,6 +121,7 @@ void vtkMRMLMarkupsGridSurfaceNode::CopyContent(vtkMRMLNode* anode, bool deepCop
   vtkMRMLCopyVectorMacro(GridResolution, int, 2);
   vtkMRMLCopyFloatMacro(ExpansionFactor);
   vtkMRMLCopyEnumMacro(WrapAround);
+  vtkMRMLCopyBooleanMacro(IterativeParameterSpaceCalculation);
   vtkMRMLCopyEndMacro();
 }
 
@@ -131,6 +134,7 @@ void vtkMRMLMarkupsGridSurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkMRMLPrintVectorMacro(GridResolution, int, 2);
   vtkMRMLPrintFloatMacro(ExpansionFactor);
   vtkMRMLPrintEnumMacro(WrapAround);
+  vtkMRMLPrintBooleanMacro(IterativeParameterSpaceCalculation);
   vtkMRMLPrintEndMacro();
 }
 
