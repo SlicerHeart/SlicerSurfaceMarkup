@@ -180,7 +180,7 @@ protected:
 
   /// Determine whether use iterative method for finding the evaluated parameter space
   // when \sa WrapAround is enabled, if the selected source algorithm supports it. Disabled by default.
-  bool IterativeParameterSpaceCalculation = false;
+  bool IterativeParameterSpaceCalculation = true;
 
   /// In order to be able to resample to a new grid resolution after a change.
   int PreviousGridResolution[2] = { 0, 0 };

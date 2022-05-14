@@ -1037,21 +1037,6 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
     return;
   }
 
-  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
-  {
-    /* TODO:
-    // Separate linear space ranges based on wrapping direction
-    int minLinSpace_Wrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[0] : outLinSpace[2]);
-    int maxLinSpace_Wrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[1] : outLinSpace[3]);
-    int minLinSpace_NonWrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[2] : outLinSpace[0]);
-    // Limit non-wrapping direction to one sample to speed up computation
-    int maxLinSpace_NonWrapping = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? outLinSpace[2] : outLinSpace[0]);
-    */
-    vtkWarningMacro("Iterative parameter space calculation not yet implemented if wrap around is along the V side! Using non-iterative method");
-    this->CalculateEvaluatedParameterSpace(outLinSpace);
-    return;
-  }
-
   // Define lambda to calculate dot product
   auto dotProduct = [](double v1[3], double v2[3]) -> double
   { 
@@ -1063,16 +1048,25 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
     return product;
   };
 
+  // Define lambda to get linear space wrapping indices
+  auto linSpaceIndex = [this](int index) -> int
+  { 
+    return ((this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU) ? index : (index + 2)  % 4);
+  };
+  // Parametric dimension index
+  int parIdx = (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU ? 0 : 1);
+
   int interpolatingOverlap[2] = {0};
   this->GetInterpolatingOverlap(interpolatingOverlap);
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
 
   std::array<double, 4> currentLinSpace = {0.0};
-  currentLinSpace[0] = (double)(interpolatingOverlap[0] - 1) / (interpolatingGridResolution[0] - 1);
-  currentLinSpace[1] = 1.0;
-  currentLinSpace[2] = 0.0;  // Limit non-wrapping direction to one sample to speed up computation
-  currentLinSpace[3] = 0.0;
+
+  currentLinSpace[linSpaceIndex(0)] = (double)(interpolatingOverlap[parIdx] - 1) / (interpolatingGridResolution[parIdx] - 1);
+  currentLinSpace[linSpaceIndex(1)] = 1.0 - (double)(interpolatingOverlap[parIdx] - 1) / (interpolatingGridResolution[parIdx] - 1);
+  currentLinSpace[linSpaceIndex(2)] = 0.0;  // Limit non-wrapping direction to one sample to speed up computation
+  currentLinSpace[linSpaceIndex(3)] = 0.0;
 
   // Initially evaluate points between minLinSpaceU and 1.0 (End1) and store vector v_Start_End1
   vtkNew<vtkPoints> evalPoints;
@@ -1086,15 +1080,15 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
 
   // Calculate step size to decrease end point parameter space position
   int samplesPerGridCell = this->GetNumberOfSamplesPerGridCell();
-  double linSpaceUPerSample = 1.0 / ((interpolatingGridResolution[0] - 1) * samplesPerGridCell);
-  int maxNumberOfIterations = (interpolatingGridResolution[0] - interpolatingOverlap[0]) * samplesPerGridCell;
+  double linSpaceUPerSample = 1.0 / ((interpolatingGridResolution[parIdx] - 1) * samplesPerGridCell);
+  int maxNumberOfIterations = (interpolatingGridResolution[parIdx] - interpolatingOverlap[parIdx]) * samplesPerGridCell;
   int currentIteration = 0;
 
   // While dot product of v_Start_End1 and current v_Start_CurrentEnd is positive
   while (currentProduct >= 0.0 && currentIteration < maxNumberOfIterations)
   {
     // Decrease linear space end by step (keep start constant)
-    currentLinSpace[1] -= linSpaceUPerSample;
+    currentLinSpace[linSpaceIndex(1)] -= linSpaceUPerSample;
     // Evaluate points in the current parametric space range, get point at the end (CurrentEnd)
     this->EvaluateSurface(currentLinSpace, uKnots, vKnots, controlPoints, evalPoints);
     double pointCurrentEnd[3] = {0.0};
@@ -1113,10 +1107,10 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
     return;
   }
 
-  outLinSpace[0] = currentLinSpace[0];
-  outLinSpace[1] = currentLinSpace[1];
-  outLinSpace[2] = -this->ExpansionFactor;
-  outLinSpace[3] = 1.0 + this->ExpansionFactor;
+  outLinSpace[linSpaceIndex(0)] = currentLinSpace[linSpaceIndex(0)];
+  outLinSpace[linSpaceIndex(1)] = currentLinSpace[linSpaceIndex(1)];
+  outLinSpace[linSpaceIndex(2)] = -this->ExpansionFactor;
+  outLinSpace[linSpaceIndex(3)] = 1.0 + this->ExpansionFactor;
 }
 
 //---------------------------------------------------------------------------

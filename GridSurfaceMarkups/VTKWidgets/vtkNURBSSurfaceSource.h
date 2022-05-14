@@ -236,7 +236,7 @@ protected:
 
   /// Determine whether use iterative method for finding the evaluated
   /// parameter space when \sa WrapAround is enabled. Disabled by default.
-  bool IterativeParameterSpaceCalculation = false;
+  bool IterativeParameterSpaceCalculation = true;
 
  protected:
   vtkNURBSSurfaceSource();
