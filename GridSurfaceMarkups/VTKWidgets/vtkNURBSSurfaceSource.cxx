@@ -201,7 +201,7 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   // Determine evaluated parameter space
   //
   std::array<double, 4> linSpace = {0.0};
-  if (this->IterativeParameterSpaceCalculation)
+  if (this->IterativeParameterSpaceCalculation && this->WrapAround != vtkMRMLMarkupsGridSurfaceNode::NoWrap)
   {
     this->CalculateWrappedAroundParameterSpaceIterative(uKnots, vKnots, controlPoints, linSpace);
   }
