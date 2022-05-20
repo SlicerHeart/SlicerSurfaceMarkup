@@ -75,6 +75,9 @@ vtkSlicerGridSurfaceRepresentation3D::vtkSlicerGridSurfaceRepresentation3D()
 
   this->ControlPolygonActor->SetMapper(this->ControlPolygonMapper);
 
+  this->GridSurfaceActor->SetProperty(this->GridSurfaceProperty);
+  this->ControlPolygonActor->SetProperty(this->ControlPolygonProperty);
+
   this->UpdateInterpolatorConnection();
 }
 
@@ -100,12 +103,20 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller, u
     this->MarkupsDisplayNode->GetLineDiameter() : this->ControlPointSize * this->MarkupsDisplayNode->GetLineThickness());
   this->ControlPolygonTubeFilter->SetRadius(diameter * 0.5);
 
+  // Set same visibility options for the surface patch and the control polygon as the control points
   int controlPointType = Active;
   if (this->MarkupsDisplayNode->GetActiveComponentType() != vtkMRMLMarkupsDisplayNode::ComponentLine)
   {
     controlPointType = this->GetAllControlPointsSelected() ? Selected : Unselected;
   }
-  this->ControlPolygonActor->SetProperty(this->GetControlPointsPipeline(controlPointType)->Property);
+  this->GridSurfaceProperty->DeepCopy(this->GetControlPointsPipeline(controlPointType)->Property);
+  this->ControlPolygonProperty->DeepCopy(this->GetControlPointsPipeline(controlPointType)->Property);
+
+  // Use fill and outline visibility/opacity for the surface patch and the control polygon, respectively
+  this->GridSurfaceActor->SetVisibility(this->MarkupsDisplayNode->GetFillVisibility());
+  this->GridSurfaceProperty->SetOpacity(this->MarkupsDisplayNode->GetFillOpacity());
+  this->ControlPolygonActor->SetVisibility(this->MarkupsDisplayNode->GetOutlineVisibility());
+  this->ControlPolygonProperty->SetOpacity(this->MarkupsDisplayNode->GetOutlineOpacity());
 
   this->NeedToRenderOn();
 }

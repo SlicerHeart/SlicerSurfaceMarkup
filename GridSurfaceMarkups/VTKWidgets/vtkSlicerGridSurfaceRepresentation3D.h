@@ -60,6 +60,7 @@ class vtkBezierSurfaceSource;
 class vtkPolyData;
 class vtkPolyDataNormals;
 class vtkPointSet;
+class vtkProperty;
 class vtkTubeFilter;
 class vtkMRMLMarkupsGridSurfaceNode;
 
@@ -115,6 +116,7 @@ protected:
   vtkNew<vtkPolyDataNormals> GridSurfaceNormals;
   vtkNew<vtkPolyDataMapper> GridSurfaceMapper;
   vtkNew<vtkActor> GridSurfaceActor;
+  vtkNew<vtkProperty> GridSurfaceProperty;
   ///@}
 
   /// Control polygon related elements
@@ -123,6 +125,7 @@ protected:
   vtkNew<vtkTubeFilter> ControlPolygonTubeFilter;
   vtkNew<vtkPolyDataMapper> ControlPolygonMapper;
   vtkNew<vtkActor> ControlPolygonActor;
+  vtkNew<vtkProperty> ControlPolygonProperty;
   ///@}
 
 protected:
