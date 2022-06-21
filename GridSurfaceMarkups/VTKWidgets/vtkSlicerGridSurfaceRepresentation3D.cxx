@@ -381,6 +381,7 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
   this->NurbsSurfaceSource->SetExpansionFactor(node->GetExpansionFactor());
   this->NurbsSurfaceSource->SetWrapAround(node->GetWrapAround());
   this->NurbsSurfaceSource->SetIterativeParameterSpaceCalculation(node->GetIterativeParameterSpaceCalculation());
+  this->NurbsSurfaceSource->SetGenerateQuadMesh(node->GetGenerateQuadMesh());
 
   // Set markup control points to the surface source
   //TODO: Revisit if this is needed or only in case of the Bezier source

@@ -104,11 +104,19 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   ///@}
 
   /// Set/get variable determining whether to use iterative method for finding the evaluated
-  /// parameter space when \sa WrapAround is enabled. Disabled by default.
+  /// parameter space when \sa WrapAround is enabled. Enabled by default.
   ///@{
   vtkSetMacro(IterativeParameterSpaceCalculation, bool);
   vtkBooleanMacro(IterativeParameterSpaceCalculation, bool);
   vtkGetMacro(IterativeParameterSpaceCalculation, bool);
+  ///@}
+
+  /// Set/get flag specifying whether a quad mesh is generated instead of a triangle mesh.
+  /// Disabled by default.
+  ///@{
+  vtkSetMacro(GenerateQuadMesh, bool);
+  vtkBooleanMacro(GenerateQuadMesh, bool);
+  vtkGetMacro(GenerateQuadMesh, bool);
   ///@}
   
 protected:
@@ -119,6 +127,8 @@ protected:
   void EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
   /// Triangulate evaluated surface points to complete the output surface
   void TriangulateSurface(std::array<double, 4>& linSpace, vtkPolyData* outputPolyData);
+  /// Generate quad mesh from the evaluated surface points to produce a surface
+  void GenerateQuadMeshSurface(std::array<double, 4>& linSpace, vtkPolyData* outputPolyData);
 
   /// \brief Compute uk and vl parameter vectors from input points
   /// The data points array has a row size of InputResolution[0] and column size of InputResolution[1] and it is 1-dimensional.
@@ -235,8 +245,11 @@ protected:
   int WrapAround = vtkMRMLMarkupsGridSurfaceNode::NoWrap;
 
   /// Determine whether use iterative method for finding the evaluated
-  /// parameter space when \sa WrapAround is enabled. Disabled by default.
+  /// parameter space when \sa WrapAround is enabled. Enabled by default.
   bool IterativeParameterSpaceCalculation = true;
+
+  /// Flag specifying whether quad mesh will be generated instead of a triangle mesh.
+  bool GenerateQuadMesh = false;
 
  protected:
   vtkNURBSSurfaceSource();

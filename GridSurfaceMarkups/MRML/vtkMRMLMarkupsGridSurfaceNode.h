@@ -136,11 +136,19 @@ public:
   vtkGetMacro(ExpansionFactor, double);
 
   /// Set/get variable determining whether to use iterative method for finding the evaluated
-  /// parameter space when \sa WrapAround is enabled. Disabled by default.
+  /// parameter space when \sa WrapAround is enabled. Enabled by default.
   ///@{
   vtkSetMacro(IterativeParameterSpaceCalculation, bool);
   vtkBooleanMacro(IterativeParameterSpaceCalculation, bool);
   vtkGetMacro(IterativeParameterSpaceCalculation, bool);
+  ///@}
+
+  /// Set/get flag specifying whether a quad mesh is generated instead of a triangle mesh.
+  /// Disabled by default.
+  ///@{
+  vtkSetMacro(GenerateQuadMesh, bool);
+  vtkBooleanMacro(GenerateQuadMesh, bool);
+  vtkGetMacro(GenerateQuadMesh, bool);
   ///@}
 
   //TODO:
@@ -179,8 +187,11 @@ protected:
   int WrapAround = vtkMRMLMarkupsGridSurfaceNode::NoWrap;
 
   /// Determine whether use iterative method for finding the evaluated parameter space
-  // when \sa WrapAround is enabled, if the selected source algorithm supports it. Disabled by default.
+  /// when \sa WrapAround is enabled, if the selected source algorithm supports it. Enabled by default.
   bool IterativeParameterSpaceCalculation = true;
+
+  /// Flag specifying whether quad mesh will be generated instead of a triangle mesh.
+  bool GenerateQuadMesh = false;
 
   /// In order to be able to resample to a new grid resolution after a change.
   int PreviousGridResolution[2] = { 0, 0 };

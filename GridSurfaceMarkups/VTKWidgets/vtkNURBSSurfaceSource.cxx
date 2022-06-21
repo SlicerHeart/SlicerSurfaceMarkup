@@ -76,6 +76,7 @@ void vtkNURBSSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
   os << "Use centripetal: " << (this->UseCentripetal ? "true" : "false") << "\n";
   os << "Wrap around: " << vtkMRMLMarkupsGridSurfaceNode::GetWrapAroundAsString(this->WrapAround) << "\n";
   os << "Iterative parameter cpace calculation: " << (this->IterativeParameterSpaceCalculation ? "true" : "false") << "\n";
+  os << "Generate quad mesh: " << (this->GenerateQuadMesh ? "true" : "false") << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -217,7 +218,14 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   this->EvaluateSurface(linSpace, uKnots, vKnots, controlPoints, evalPoints);
   outputPolyData->SetPoints(evalPoints);
 
-  this->TriangulateSurface(linSpace, outputPolyData);
+  if (!this->GenerateQuadMesh)
+  {
+    this->TriangulateSurface(linSpace, outputPolyData);
+  }
+  else
+  {
+    this->GenerateQuadMeshSurface(linSpace, outputPolyData);
+  }
 
   // Add point indices as scalar array for debugging purposes
   vtkNew<vtkIntArray> indexArray;
@@ -371,6 +379,78 @@ void vtkNURBSSurfaceSource::TriangulateSurface(std::array<double, 4>& linSpace, 
       triangle[1] = b;
       triangle[2] = a;
       cells->InsertNextCell(3, triangle);
+    }
+  }
+  outputPolyData->SetPolys(cells);
+}
+
+//---------------------------------------------------------------------------
+void vtkNURBSSurfaceSource::GenerateQuadMeshSurface(std::array<double, 4>& linSpace, vtkPolyData* outputPolyData)
+{
+  if (!outputPolyData)
+  {
+    vtkErrorMacro("GenerateQuadMeshSurface: Invalid poly data given");
+    return;
+  }
+
+  std::array<unsigned int, 2> sampleSize = {0};
+  this->CalculateSampleSize(linSpace, sampleSize);
+
+  vtkNew<vtkCellArray> cells;
+  for (unsigned int i=0; i<sampleSize[0]-1; i++)
+  {
+    for (unsigned int j=0; j<sampleSize[1]-1; j++)
+    {
+      unsigned int base = i*sampleSize[1] + j;
+      unsigned int a = base;
+      unsigned int b = base + 1;
+      unsigned int c = base + sampleSize[1] + 1;
+      unsigned int d = base + sampleSize[1];
+      vtkIdType quad[4] = {0};
+
+      quad[0] = c;
+      quad[1] = b;
+      quad[2] = a;
+      quad[3] = d;
+      cells->InsertNextCell(4, quad);
+    }
+  }
+
+  // Insert strip of triangles between the meeting wrapped around edges
+  if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
+  {
+    for (unsigned int v=0; v<sampleSize[1]-1; v++)
+    {
+      unsigned int base = v;
+      unsigned int a = base;
+      unsigned int b = base + 1;
+      unsigned int c = base + (sampleSize[0]-1) * sampleSize[1] + 1;
+      unsigned int d = base + (sampleSize[0]-1) * sampleSize[1];
+      vtkIdType quad[4] = {0};
+
+      quad[0] = c;
+      quad[1] = b;
+      quad[2] = a;
+      quad[3] = d;
+      cells->InsertNextCell(4, quad);
+    }
+  }
+  else if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongV)
+  {
+    for (unsigned int u=0; u<sampleSize[0]-1; u++)
+    {
+      unsigned int base = u*sampleSize[1];
+      unsigned int a = base;
+      unsigned int b = base + sampleSize[1];
+      unsigned int c = base + sampleSize[1] * 2 - 1;
+      unsigned int d = base + sampleSize[1] - 1;
+      vtkIdType quad[4] = {0};
+
+      quad[0] = c;
+      quad[1] = b;
+      quad[2] = a;
+      quad[3] = d;
+      cells->InsertNextCell(4, quad);
     }
   }
   outputPolyData->SetPolys(cells);
