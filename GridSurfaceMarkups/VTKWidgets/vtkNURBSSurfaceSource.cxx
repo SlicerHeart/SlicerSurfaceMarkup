@@ -1179,6 +1179,7 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
     currentProduct = dotProduct(vector_Start_End1, vector_Start_CurrentEnd);
     currentIteration++;
   }
+  currentLinSpace[linSpaceIndex(1)] -= linSpaceUPerSample;
 
   if (currentIteration >= maxNumberOfIterations)
   {
