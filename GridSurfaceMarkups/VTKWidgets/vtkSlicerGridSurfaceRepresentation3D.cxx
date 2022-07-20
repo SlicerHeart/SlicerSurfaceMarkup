@@ -380,6 +380,7 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridS
   // Set supported parameters from MRML node
   this->NurbsSurfaceSource->SetExpansionFactor(node->GetExpansionFactor());
   this->NurbsSurfaceSource->SetWrapAround(node->GetWrapAround());
+  this->NurbsSurfaceSource->SetDelta(1.0 / node->GetSamplingResolution());
   this->NurbsSurfaceSource->SetIterativeParameterSpaceCalculation(node->GetIterativeParameterSpaceCalculation());
   this->NurbsSurfaceSource->SetGenerateQuadMesh(node->GetGenerateQuadMesh());
 

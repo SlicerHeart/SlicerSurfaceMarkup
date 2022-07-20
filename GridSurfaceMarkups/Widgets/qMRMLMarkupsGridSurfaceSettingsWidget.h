@@ -93,6 +93,8 @@ protected slots:
   void onGridSurfaceParameterChanged();
   /// Handle apply grid surface button click
   void onApplyGridResolution();
+  /// Handle sampling resolution change
+  void onSamplingResolutionChanged(int value);
 
 protected:
   qMRMLMarkupsGridSurfaceSettingsWidget(QWidget* parent, qMRMLMarkupsGridSurfaceSettingsWidgetPrivate &d);

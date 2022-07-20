@@ -88,6 +88,7 @@ void qMRMLMarkupsGridSurfaceSettingsWidgetPrivate::setupUi(qMRMLMarkupsGridSurfa
 
   QObject::connect(this->surfaceTypeComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->applyGridResolutionButton, SIGNAL(clicked()), q, SLOT(onApplyGridResolution()));
+  QObject::connect(this->samplingResolutionSpinBox, SIGNAL(valueChanged(int)), q, SLOT(onSamplingResolutionChanged(int)));
   QObject::connect(this->wrapAroundComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->modelNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), q, SLOT(onGridSurfaceParameterChanged()));
   q->setEnabled(q->MarkupsNode != nullptr);
@@ -161,6 +162,10 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::updateWidgetFromMRML()
   d->gridResolutionSpinBox_Y->setValue(gridResolution[1]);
   d->gridResolutionSpinBox_Y->blockSignals(wasBlocked);
 
+  wasBlocked = d->samplingResolutionSpinBox->blockSignals(true);
+  d->samplingResolutionSpinBox->setValue(markupsGridSurfaceNode->GetSamplingResolution());
+  d->samplingResolutionSpinBox->blockSignals(wasBlocked);
+
   wasBlocked = d->wrapAroundComboBox->blockSignals(true);
   d->wrapAroundComboBox->setCurrentIndex(d->wrapAroundComboBox->findData(markupsGridSurfaceNode->GetWrapAround()));
   d->wrapAroundComboBox->blockSignals(wasBlocked);
@@ -192,6 +197,19 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceParameterChanged()
   // Set output model
   vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast(d->modelNodeSelector->currentNode());
   gridSurfaceNode->SetOutputSurfaceModelNodeID(modelNode ? modelNode->GetID() : "");
+}
+
+//-----------------------------------------------------------------------------
+void qMRMLMarkupsGridSurfaceSettingsWidget::onSamplingResolutionChanged(int value)
+{
+  Q_D(qMRMLMarkupsGridSurfaceSettingsWidget);
+  vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(this->MarkupsNode);
+  if (!gridSurfaceNode)
+  {
+    return;
+  }
+  MRMLNodeModifyBlocker blocker(gridSurfaceNode);
+  gridSurfaceNode->SetSamplingResolution(value);
 }
 
 //-----------------------------------------------------------------------------

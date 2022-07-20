@@ -85,6 +85,7 @@ void vtkMRMLMarkupsGridSurfaceNode::WriteXML(ostream& of, int nIndent)
   vtkMRMLWriteXMLVectorMacro(gridResolution, GridResolution, int, 2);
   vtkMRMLWriteXMLFloatMacro(expansionFactor, ExpansionFactor);
   vtkMRMLWriteXMLEnumMacro(wrapAround, WrapAround);
+  vtkMRMLWriteXMLFloatMacro(samplingResolution, SamplingResolution);
   vtkMRMLWriteXMLBooleanMacro(iterativeParameterSpaceCalculation, IterativeParameterSpaceCalculation);
   vtkMRMLWriteXMLBooleanMacro(generateQuadMesh, GenerateQuadMesh);
   vtkMRMLWriteXMLEndMacro();
@@ -101,6 +102,7 @@ void vtkMRMLMarkupsGridSurfaceNode::ReadXMLAttributes(const char** atts)
   vtkMRMLReadXMLVectorMacro(gridResolution, GridResolution, int, 2);
   vtkMRMLReadXMLFloatMacro(expansionFactor, ExpansionFactor);
   vtkMRMLReadXMLEnumMacro(wrapAround, WrapAround);
+  vtkMRMLReadXMLFloatMacro(samplingResolution, SamplingResolution);
   vtkMRMLReadXMLBooleanMacro(iterativeParameterSpaceCalculation, IterativeParameterSpaceCalculation);
   vtkMRMLReadXMLBooleanMacro(generateQuadMesh, GenerateQuadMesh);
   vtkMRMLReadXMLEndMacro();
@@ -123,6 +125,7 @@ void vtkMRMLMarkupsGridSurfaceNode::CopyContent(vtkMRMLNode* anode, bool deepCop
   vtkMRMLCopyVectorMacro(GridResolution, int, 2);
   vtkMRMLCopyFloatMacro(ExpansionFactor);
   vtkMRMLCopyEnumMacro(WrapAround);
+  vtkMRMLCopyFloatMacro(SamplingResolution);
   vtkMRMLCopyBooleanMacro(IterativeParameterSpaceCalculation);
   vtkMRMLCopyBooleanMacro(GenerateQuadMesh);
   vtkMRMLCopyEndMacro();
@@ -137,6 +140,7 @@ void vtkMRMLMarkupsGridSurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkMRMLPrintVectorMacro(GridResolution, int, 2);
   vtkMRMLPrintFloatMacro(ExpansionFactor);
   vtkMRMLPrintEnumMacro(WrapAround);
+  vtkMRMLPrintFloatMacro(SamplingResolution);
   vtkMRMLPrintBooleanMacro(IterativeParameterSpaceCalculation);
   vtkMRMLPrintBooleanMacro(GenerateQuadMesh);
   vtkMRMLPrintEndMacro();

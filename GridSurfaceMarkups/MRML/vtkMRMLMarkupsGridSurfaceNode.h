@@ -130,10 +130,11 @@ public:
   void SetGridResolution(int x, int y);
   ///@}
 
-  /// Set expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
+  ///@{
+  /// Set/get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
   vtkSetMacro(ExpansionFactor, double);
-  /// Get expansion factor. The surface will overreach the edge control points by this fraction of its size. 0 by default.
   vtkGetMacro(ExpansionFactor, double);
+  ///@}
 
   /// Set/get variable determining whether to use iterative method for finding the evaluated
   /// parameter space when \sa WrapAround is enabled. Enabled by default.
@@ -149,6 +150,12 @@ public:
   vtkSetMacro(GenerateQuadMesh, bool);
   vtkBooleanMacro(GenerateQuadMesh, bool);
   vtkGetMacro(GenerateQuadMesh, bool);
+  ///@}
+
+  ///@{
+  /// Set/get sampling resolution. It specifies number of samples per grid element.
+  vtkSetMacro(SamplingResolution, double);
+  vtkGetMacro(SamplingResolution, double);
   ///@}
 
   //TODO:
@@ -192,6 +199,9 @@ protected:
 
   /// Flag specifying whether quad mesh will be generated instead of a triangle mesh.
   bool GenerateQuadMesh = false;
+
+  /// Number of samples (triangle/quad vertices) per grid element (i.e. between two control points).
+  double SamplingResolution = 10.0;
 
   /// In order to be able to resample to a new grid resolution after a change.
   int PreviousGridResolution[2] = { 0, 0 };
