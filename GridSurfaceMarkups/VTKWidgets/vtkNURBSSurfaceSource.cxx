@@ -1179,6 +1179,28 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
     currentProduct = dotProduct(vector_Start_End1, vector_Start_CurrentEnd);
     currentIteration++;
   }
+
+  // Fine-tune linear space calculation between the last two samples
+  double accuracyPercent = 1.0;
+  double fineTuningStep = linSpaceUPerSample * accuracyPercent / 100.0;
+  maxNumberOfIterations = 100 / (int)(accuracyPercent + 0.5) + 1;
+  currentIteration = 0;
+  while (currentProduct < 0.0 && currentIteration < maxNumberOfIterations)
+  {
+    // Decrease linear space end by fine tuning step (keep start constant)
+    currentLinSpace[linSpaceIndex(1)] += fineTuningStep;
+    // Evaluate points in the current parametric space range, get point at the end (CurrentEnd)
+    this->EvaluateSurface(currentLinSpace, uKnots, vKnots, controlPoints, evalPoints);
+    double pointCurrentEnd[3] = {0.0};
+    evalPoints->GetPoint(evalPoints->GetNumberOfPoints()-1, pointCurrentEnd);
+    // Construct vector v_Start_CurrentEnd
+    double vector_Start_CurrentEnd[3] = { pointCurrentEnd[0]-pointStart[0], pointCurrentEnd[1]-pointStart[1], pointCurrentEnd[2]-pointStart[2] };
+    // Calculate dot product of vectors v_Start_End1 and current v_Start_CurrentEnd
+    currentProduct = dotProduct(vector_Start_End1, vector_Start_CurrentEnd);
+    currentIteration++;
+  }
+
+  // Leave one sample length for the sitching
   currentLinSpace[linSpaceIndex(1)] -= linSpaceUPerSample;
 
   if (currentIteration >= maxNumberOfIterations)
