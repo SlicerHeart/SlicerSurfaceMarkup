@@ -1181,7 +1181,7 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
   }
 
   // Fine-tune linear space calculation between the last two samples
-  double accuracyPercent = 1.0;
+  double accuracyPercent = 2.0;
   double fineTuningStep = linSpaceUPerSample * accuracyPercent / 100.0;
   maxNumberOfIterations = 100 / (int)(accuracyPercent + 0.5) + 1;
   currentIteration = 0;

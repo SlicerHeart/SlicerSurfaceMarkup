@@ -311,7 +311,7 @@ void vtkMRMLMarkupsGridSurfaceNode::SetOutputSurfaceModelNodeID(const char* mode
     currentOutputSurfaceModelNode->SetPolyDataConnection(nullptr);
   }
 
-  this->SetNodeReferenceID(this->GetOutputSurfaceModelNodeReferenceRole(), modelNodeId);
+  this->SetAndObserveNodeReferenceID(this->GetOutputSurfaceModelNodeReferenceRole(), modelNodeId);
 
   vtkMRMLModelNode* newOutputSurfaceModelNode = this->GetOutputSurfaceModelNode();
   if (newOutputSurfaceModelNode)
@@ -319,7 +319,7 @@ void vtkMRMLMarkupsGridSurfaceNode::SetOutputSurfaceModelNodeID(const char* mode
     // Make sure new output surface is visible
     newOutputSurfaceModelNode->CreateDefaultDisplayNodes();
     newOutputSurfaceModelNode->SetDisplayVisibility(true);
-    // Prevent control point snapping on the output surface
+    // Prevent control point snapping on the output surface by default
     newOutputSurfaceModelNode->SetSelectable(false);
   }
 }

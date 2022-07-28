@@ -88,9 +88,9 @@ void qMRMLMarkupsGridSurfaceSettingsWidgetPrivate::setupUi(qMRMLMarkupsGridSurfa
 
   QObject::connect(this->surfaceTypeComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->applyGridResolutionButton, SIGNAL(clicked()), q, SLOT(onApplyGridResolution()));
-  QObject::connect(this->samplingResolutionSpinBox, SIGNAL(valueChanged(int)), q, SLOT(onSamplingResolutionChanged(int)));
   QObject::connect(this->wrapAroundComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->modelNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), q, SLOT(onGridSurfaceParameterChanged()));
+  QObject::connect(this->continuousEditingCheckBox, SIGNAL(toggled(bool)), q, SLOT(onContinuousEditingCheckBoxToggled(bool)));
   q->setEnabled(q->MarkupsNode != nullptr);
 }
 
@@ -118,10 +118,8 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::setup()
 // --------------------------------------------------------------------------
 void qMRMLMarkupsGridSurfaceSettingsWidget::setMRMLMarkupsNode(vtkMRMLMarkupsNode* markupsNode)
 {
-  Q_D(qMRMLMarkupsGridSurfaceSettingsWidget);
-
   this->MarkupsNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(markupsNode);
-  this->setEnabled(this->MarkupsNode!= nullptr);
+  this->setEnabled(this->MarkupsNode !=  nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -174,6 +172,22 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::updateWidgetFromMRML()
   wasBlocked = d->modelNodeSelector->blockSignals(true);
   d->modelNodeSelector->setCurrentNode(modelNode);
   d->modelNodeSelector->blockSignals(wasBlocked);
+
+  wasBlocked = d->continuousEditingCheckBox->blockSignals(true);
+  if (markupsGridSurfaceNode->GetLocked() && (!modelNode || modelNode->GetSelectable()))
+  {
+    d->continuousEditingCheckBox->setCheckState(Qt::Unchecked);
+  }
+  else if (!markupsGridSurfaceNode->GetLocked() && (!modelNode || !modelNode->GetSelectable()))
+  {
+    d->continuousEditingCheckBox->setCheckState(Qt::Checked);
+  }
+  else
+  {
+    // Inconsistent MRML content -> partially checked
+    d->continuousEditingCheckBox->setCheckState(Qt::PartiallyChecked);
+  }
+  d->continuousEditingCheckBox->blockSignals(wasBlocked);
 }
 
 //-----------------------------------------------------------------------------
@@ -194,13 +208,16 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onGridSurfaceParameterChanged()
   // Set wrapping around
   gridSurfaceNode->SetWrapAround(d->wrapAroundComboBox->currentData().toInt());
 
+  // Set sampling resolution
+  gridSurfaceNode->SetSamplingResolution(d->samplingResolutionSpinBox->value());
+
   // Set output model
   vtkMRMLModelNode* modelNode = vtkMRMLModelNode::SafeDownCast(d->modelNodeSelector->currentNode());
   gridSurfaceNode->SetOutputSurfaceModelNodeID(modelNode ? modelNode->GetID() : "");
 }
 
 //-----------------------------------------------------------------------------
-void qMRMLMarkupsGridSurfaceSettingsWidget::onSamplingResolutionChanged(int value)
+void qMRMLMarkupsGridSurfaceSettingsWidget::onContinuousEditingCheckBoxToggled(bool editingOn)
 {
   Q_D(qMRMLMarkupsGridSurfaceSettingsWidget);
   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(this->MarkupsNode);
@@ -208,8 +225,16 @@ void qMRMLMarkupsGridSurfaceSettingsWidget::onSamplingResolutionChanged(int valu
   {
     return;
   }
+
   MRMLNodeModifyBlocker blocker(gridSurfaceNode);
-  gridSurfaceNode->SetSamplingResolution(value);
+
+  gridSurfaceNode->SetLocked(!editingOn);
+
+  vtkMRMLModelNode* modelNode = gridSurfaceNode->GetOutputSurfaceModelNode();
+  if (modelNode)
+  {
+    modelNode->SetSelectable(!editingOn);
+  }
 }
 
 //-----------------------------------------------------------------------------

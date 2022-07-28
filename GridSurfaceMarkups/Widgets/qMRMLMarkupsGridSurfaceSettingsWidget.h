@@ -93,8 +93,8 @@ protected slots:
   void onGridSurfaceParameterChanged();
   /// Handle apply grid surface button click
   void onApplyGridResolution();
-  /// Handle sampling resolution change
-  void onSamplingResolutionChanged(int value);
+  /// Handle continuous editing checkbox state change
+  void onContinuousEditingCheckBoxToggled(bool on);
 
 protected:
   qMRMLMarkupsGridSurfaceSettingsWidget(QWidget* parent, qMRMLMarkupsGridSurfaceSettingsWidgetPrivate &d);
