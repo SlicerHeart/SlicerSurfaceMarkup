@@ -154,6 +154,10 @@ void vtkMRMLMarkupsGridSurfaceNode::ProcessMRMLEvents(vtkObject* caller, unsigne
     this->UpdateGridSurfaceFromControlPoints();
     //this->UpdateObjectToWorldMatrix();
   }
+  else if (caller == this->GetOutputSurfaceModelNode())
+  {
+    this->Modified();
+  }
   else if (caller == this && event == vtkMRMLMarkupsNode::PointPositionDefinedEvent)
   {
     this->UpdateControlPointsFromGridSurface();
