@@ -1144,7 +1144,7 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
   std::array<double, 4> currentLinSpace = {0.0};
 
   currentLinSpace[linSpaceIndex(0)] = (double)(interpolatingOverlap[parIdx] - 1) / (interpolatingGridResolution[parIdx] - 1);
-  currentLinSpace[linSpaceIndex(1)] = 1.0 - (double)(interpolatingOverlap[parIdx] - 1) / (interpolatingGridResolution[parIdx] - 1);
+  currentLinSpace[linSpaceIndex(1)] = 1.0 - ((double)(interpolatingOverlap[parIdx] - 1) / (interpolatingGridResolution[parIdx] - 1)) / 2.0;
   currentLinSpace[linSpaceIndex(2)] = 0.0;  // Limit non-wrapping direction to one sample to speed up computation
   currentLinSpace[linSpaceIndex(3)] = 0.0;
 
