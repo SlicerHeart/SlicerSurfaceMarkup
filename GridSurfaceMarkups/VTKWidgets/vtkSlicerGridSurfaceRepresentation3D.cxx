@@ -114,9 +114,9 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateFromMRML(vtkMRMLNode* caller, u
 
   // Use fill and outline visibility/opacity for the surface patch and the control polygon, respectively
   this->GridSurfaceActor->SetVisibility(this->MarkupsDisplayNode->GetFillVisibility());
-  this->GridSurfaceProperty->SetOpacity(this->MarkupsDisplayNode->GetFillOpacity());
+  this->GridSurfaceProperty->SetOpacity(this->MarkupsDisplayNode->GetFillOpacity() * this->MarkupsDisplayNode->GetOpacity());
   this->ControlPolygonActor->SetVisibility(this->MarkupsDisplayNode->GetOutlineVisibility());
-  this->ControlPolygonProperty->SetOpacity(this->MarkupsDisplayNode->GetOutlineOpacity());
+  this->ControlPolygonProperty->SetOpacity(this->MarkupsDisplayNode->GetOutlineOpacity() * this->MarkupsDisplayNode->GetOpacity());
 
   this->NeedToRenderOn();
 }
