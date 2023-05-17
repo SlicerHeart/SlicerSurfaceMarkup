@@ -164,7 +164,7 @@
         <item row="3" column="0">
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>Samples per cellt:</string>
+           <string>Samples per cell:</string>
           </property>
          </widget>
         </item>
