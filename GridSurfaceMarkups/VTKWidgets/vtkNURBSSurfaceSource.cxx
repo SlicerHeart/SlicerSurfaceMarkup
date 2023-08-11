@@ -143,7 +143,7 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   this->GetInterpolatingOverlap(interpolatingOverlap);
   int interpolatingGridResolution[2] = {0};
   this->GetInterpolatingGridResolution(interpolatingGridResolution);
-  
+
   // Get parameter arrays in the two directions
   vtkNew<vtkDoubleArray> ukParams;
   vtkNew<vtkDoubleArray> vlParams;
@@ -416,7 +416,7 @@ void vtkNURBSSurfaceSource::GenerateQuadMeshSurface(std::array<double, 4>& linSp
     }
   }
 
-  // Insert strip of triangles between the meeting wrapped around edges
+  // Insert strip of quads between the meeting wrapped around edges
   if (this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU)
   {
     for (unsigned int v=0; v<sampleSize[1]-1; v++)
@@ -1119,7 +1119,7 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
 
   // Define lambda to calculate dot product
   auto dotProduct = [](double v1[3], double v2[3]) -> double
-  { 
+  {
     double product = 0.0;
     for (int i=0; i<3; i++)
     {
@@ -1130,7 +1130,7 @@ void vtkNURBSSurfaceSource::CalculateWrappedAroundParameterSpaceIterative(vtkDou
 
   // Define lambda to get linear space wrapping indices
   auto linSpaceIndex = [this](int index) -> int
-  { 
+  {
     return ((this->WrapAround == vtkMRMLMarkupsGridSurfaceNode::AlongU) ? index : (index + 2)  % 4);
   };
   // Parametric dimension index
