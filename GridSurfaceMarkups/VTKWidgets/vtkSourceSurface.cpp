@@ -47,7 +47,23 @@ public:
             case Nurbs: {
                 auto nurbsSource = vtkNURBSSurfaceSource::SafeDownCast(currentSource);
                 if (nurbsSource) {
-                    nurbsSource->EvaluateSurface(points);
+                    // Assuming you have access to necessary parameters like interpolation degrees and grid resolutions
+                    int interpolatingGridResolution[2] = {/* Define these based on your requirements */};
+                    std::vector<double> ukParams, vlParams; // Define or retrieve these parameters as appropriate
+
+                    // Compute knot vectors
+                    vtkNew<vtkDoubleArray> uKnots;
+                    this->ComputeKnotVector(this->InterpolationDegrees[0], interpolatingGridResolution[0], ukParams, uKnots);
+                    vtkNew<vtkDoubleArray> vKnots;
+                    this->ComputeKnotVector(this->InterpolationDegrees[1], interpolatingGridResolution[1], vlParams, vKnots);
+
+                    // Define your linspace array based on the desired evaluation resolution
+                    std::array<double, 4> currentLinSpace = {/* minU, maxU, minV, maxV */};
+
+                    vtkNew<vtkPoints> evalPoints;
+                    this->EvaluateSurface(currentLinSpace, uKnots, vKnots, points, evalPoints);
+
+                    // Use evalPoints as needed, which now contains the evaluated surface points
                 }
                 break;
             }

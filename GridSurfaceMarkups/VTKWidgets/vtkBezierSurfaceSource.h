@@ -49,6 +49,7 @@
 class vtkPoints;
 class vtkPolyData;
 class vtkFloatArray;
+class GenericSurfaceSource;
 
 //------------------------------------------------------------------------------
 /**
@@ -60,6 +61,7 @@ class vtkFloatArray;
  */
 class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkBezierSurfaceSource : public vtkPolyDataAlgorithm
 {
+ friend GenericSurfaceSource;
  public:
 
   /**

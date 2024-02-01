@@ -123,7 +123,7 @@ vtkBezierSurfaceSource::~vtkBezierSurfaceSource()
   this->NumberOfControlPoints[1] = 0;
 }
 
-//-------------------------------------------------------------------------------
+//-------------------25,25,5-------------------------------------------------------------
 void vtkBezierSurfaceSource::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkPolyDataAlgorithm::PrintSelf(os, indent);
@@ -176,7 +176,6 @@ void vtkBezierSurfaceSource::SetControlPoints(vtkPoints* points)
 
   this->Modified();
 }
-
 
 //-------------------------------------------------------------------------------
 vtkSmartPointer<vtkPoints> vtkBezierSurfaceSource::GetControlPoints() const
