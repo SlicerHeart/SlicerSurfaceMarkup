@@ -96,9 +96,6 @@ protected:
   void UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode*);
   void UpdateControlPolygon(vtkMRMLMarkupsGridSurfaceNode*);
 
-  // Update visibility of interaction handles for representation
-  void UpdateInteractionPipeline() override;
-
   /// Populate \sa GridSurfaceControlPoints to contain the appropriate number of points
   void InitializeGridSurfaceControlPoints(int resX, int resY);
 

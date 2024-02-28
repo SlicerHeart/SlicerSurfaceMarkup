@@ -320,25 +320,6 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateInterpolatorConnection()
 }
 
 //-----------------------------------------------------------------------------
- void vtkSlicerGridSurfaceRepresentation3D::UpdateInteractionPipeline()
- {
-   vtkMRMLMarkupsGridSurfaceNode* gridSurfaceNode = vtkMRMLMarkupsGridSurfaceNode::SafeDownCast(this->MarkupsNode);
-
-   if (gridSurfaceNode)
-   {
-     int gridResolution[2] ={0};
-     gridSurfaceNode->GetGridResolution(gridResolution);
-     if (gridSurfaceNode->GetNumberOfDefinedControlPoints(true) < gridResolution[0] * gridResolution[1])
-     {
-       this->InteractionPipeline->Actor->SetVisibility(false);
-       return;
-     }
-   }
-   // Final visibility handled by superclass in vtkSlicerMarkupsWidgetRepresentation
-   Superclass::UpdateInteractionPipeline();
- }
-
-//-----------------------------------------------------------------------------
 void vtkSlicerGridSurfaceRepresentation3D::UpdateGridSurface(vtkMRMLMarkupsGridSurfaceNode* node)
 {
   if (!node)
