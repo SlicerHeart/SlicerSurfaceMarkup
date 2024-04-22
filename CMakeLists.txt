@@ -7,9 +7,9 @@ project(SurfaceMarkup)
 set(EXTENSION_HOMEPAGE "https://github.com/SlicerHeart/SlicerSurfaceMarkup/tree/master")
 set(EXTENSION_CATEGORY "Informatics")
 set(EXTENSION_CONTRIBUTORS "Csaba Pinter (Pixel Medical / Ebatinca), Rafael Palomar (Oslo University Hospital / NTNU), Andras Lasso (PerkLab, Queen's)")
-set(EXTENSION_DESCRIPTION "3D Slicer extension adding support for grid surfaces such as NURBS or Bézier surfaces")
+set(EXTENSION_DESCRIPTION "3D Slicer extension adding a new markup type for grid based surfaces such as NURBS or Bézier surfaces.")
 set(EXTENSION_ICONURL "https://github.com/SlicerHeart/SlicerSurfaceMarkup/raw/master/SurfaceMarkupLogo_128.png")
-set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/SurfaceMarkup/Screenshots/1.png")
+set(EXTENSION_SCREENSHOTURLS "https://github.com/SlicerHeart/SlicerSurfaceMarkup/raw/master/Screenshots/NURBS.png https://github.com/SlicerHeart/SlicerSurfaceMarkup/raw/master/Screenshots/Bezier.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
