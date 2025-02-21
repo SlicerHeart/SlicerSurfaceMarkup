@@ -42,6 +42,7 @@
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
 #include <vtkExecutive.h>
+#include <vtkFloatArray.h>
 #include <vtkIdList.h>
 #include <vtkIntArray.h>
 #include <vtkInformation.h>
@@ -215,8 +216,14 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
   // Construct surface
   //
   vtkNew<vtkPoints> evalPoints;
-  this->EvaluateSurface(linSpace, uKnots, vKnots, controlPoints, evalPoints);
+  vtkNew<vtkFloatArray> linSpaceXVector;
+  linSpaceXVector->SetName("LinSpaceX");
+  vtkNew<vtkFloatArray> linSpaceYVector;
+  linSpaceYVector->SetName("LinSpaceY");
+  this->EvaluateSurface(linSpace, uKnots, vKnots, controlPoints, evalPoints, linSpaceXVector, linSpaceYVector);
   outputPolyData->SetPoints(evalPoints);
+  outputPolyData->GetPointData()->AddArray(linSpaceXVector);
+  outputPolyData->GetPointData()->AddArray(linSpaceYVector);
 
   if (!this->GenerateQuadMesh)
   {
@@ -238,7 +245,8 @@ void vtkNURBSSurfaceSource::ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPoly
 }
 
 //---------------------------------------------------------------------------
-void vtkNURBSSurfaceSource::EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints)
+void vtkNURBSSurfaceSource::EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints,
+  vtkPoints* outEvalPoints, vtkFloatArray* linSpaceXVector/*=nullptr*/, vtkFloatArray* linSpaceYVector/*=nullptr*/)
 {
   if (this->Delta < 0.001)
   {
@@ -272,6 +280,11 @@ void vtkNURBSSurfaceSource::EvaluateSurface(std::array<double, 4>& linSpace, vtk
   this->BasisFunctions(this->InterpolationDegrees[1], vKnots, vSpans, knotsV, vBasis);
 
   outEvalPoints->Initialize();
+  if (linSpaceXVector != nullptr && linSpaceYVector != nullptr)
+  {
+    linSpaceXVector->Initialize();
+    linSpaceYVector->Initialize();
+  }
   for (int i=0; i<uSpans->GetNumberOfValues(); ++i)
   {
     int idxU = uSpans->GetValue(i) - this->InterpolationDegrees[0];
@@ -294,6 +307,11 @@ void vtkNURBSSurfaceSource::EvaluateSurface(std::array<double, 4>& linSpace, vtk
         {
           spt[d] = spt[d] + uBasis->GetValue(i * (this->InterpolationDegrees[0]+1) + k) * temp[d];
         }
+      }
+      if (linSpaceXVector != nullptr && linSpaceYVector != nullptr)
+      {
+        linSpaceXVector->InsertNextValue(knotsU->GetValue(i));
+        linSpaceYVector->InsertNextValue(knotsV->GetValue(j));
       }
       outEvalPoints->InsertNextPoint(spt);
     } // v direction

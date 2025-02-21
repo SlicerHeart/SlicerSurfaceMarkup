@@ -68,7 +68,7 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   /// Get resolution of the input control point grid (u x v)
   vtkGetVector2Macro(InputResolution, int);
 
-  
+
   ///@{
   /// Set/get interpolation degrees
   vtkSetVector2Macro(InterpolationDegrees, unsigned int);
@@ -118,13 +118,14 @@ class VTK_SLICER_GRIDSURFACEMARKUPS_MODULE_VTKWIDGETS_EXPORT vtkNURBSSurfaceSour
   vtkBooleanMacro(GenerateQuadMesh, bool);
   vtkGetMacro(GenerateQuadMesh, bool);
   ///@}
-  
+
 protected:
   /// Compute NURBS surface poly data from the input points according to input resolution and degrees
   void ComputeNurbsPolyData(vtkPoints* inputPoints, vtkPolyData* outputPolyData);
 
   /// Evaluate surface: compute interpolated surface points from control points and knot vectors
-  void EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints, vtkPoints* outEvalPoints);
+  void EvaluateSurface(std::array<double, 4>& linSpace, vtkDoubleArray* uKnots, vtkDoubleArray* vKnots, vtkPoints* controlPoints,
+    vtkPoints* outEvalPoints, vtkFloatArray* linSpaceXVector=nullptr, vtkFloatArray* linSpaceYVector=nullptr);
   /// Triangulate evaluated surface points to complete the output surface
   void TriangulateSurface(std::array<double, 4>& linSpace, vtkPolyData* outputPolyData);
   /// Generate quad mesh from the evaluated surface points to produce a surface
