@@ -45,6 +45,7 @@
 #include <qMRMLThreeDWidget.h>
 #include <vtkMRMLDisplayableManagerGroup.h>
 #include <vtkMRMLModelDisplayableManager.h>
+#include <vtkMRMLTransformNode.h>
 
 // Slicer includes
 #include <qSlicerApplication.h>
@@ -53,6 +54,7 @@
 // VTK includes
 #include <vtkActor.h>
 #include <vtkCollection.h>
+#include <vtkGeneralTransform.h>
 #include <vtkNew.h>
 #include <vtkPlaneSource.h>
 #include <vtkPolyDataMapper.h>
@@ -450,7 +452,23 @@ void vtkSlicerGridSurfaceRepresentation3D::UpdateControlPolygon(vtkMRMLMarkupsGr
       }
     }
 
-    this->ControlPolygonPolyData->SetPoints(this->GridSurfaceControlPointSet->GetPoints());
+    // Apply parent transform of the grid surface node
+    vtkNew<vtkPoints> transformedPoints;
+    transformedPoints->DeepCopy(this->GridSurfaceControlPointSet->GetPoints());
+    vtkMRMLTransformNode* parentTransformNode = node->GetParentTransformNode();
+    if (parentTransformNode)
+    {
+      vtkNew<vtkGeneralTransform> transformToWorld;
+      parentTransformNode->GetTransformToWorld(transformToWorld);
+      for (vtkIdType i = 0; i < transformedPoints->GetNumberOfPoints(); ++i)
+      {
+        double point[3];
+        transformedPoints->GetPoint(i, point);
+        transformToWorld->TransformPoint(point, point);
+        transformedPoints->SetPoint(i, point);
+      }
+    }
+    this->ControlPolygonPolyData->SetPoints(transformedPoints);
     this->ControlPolygonPolyData->SetLines(planeCells);
   }
 }
