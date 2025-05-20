@@ -89,6 +89,7 @@ void qMRMLMarkupsGridSurfaceSettingsWidgetPrivate::setupUi(qMRMLMarkupsGridSurfa
   QObject::connect(this->surfaceTypeComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->applyGridResolutionButton, SIGNAL(clicked()), q, SLOT(onApplyGridResolution()));
   QObject::connect(this->wrapAroundComboBox, SIGNAL(currentIndexChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
+  QObject::connect(this->samplingResolutionSpinBox, SIGNAL(valueChanged(int)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->modelNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), q, SLOT(onGridSurfaceParameterChanged()));
   QObject::connect(this->continuousEditingCheckBox, SIGNAL(toggled(bool)), q, SLOT(onContinuousEditingCheckBoxToggled(bool)));
   q->setEnabled(q->MarkupsNode != nullptr);
