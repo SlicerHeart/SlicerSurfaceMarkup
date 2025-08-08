@@ -61,8 +61,10 @@ vtkMRMLNodeNewMacro(vtkMRMLMarkupsGridSurfaceNode);
 
 //--------------------------------------------------------------------------------
 vtkMRMLMarkupsGridSurfaceNode::vtkMRMLMarkupsGridSurfaceNode()
-  :Superclass()
+  : Superclass()
 {
+  this->DefaultNodeNamePrefix = "GS";
+
   this->RequiredNumberOfControlPoints = NUMBER_OF_PLANE_CONTROL_POINTS;
   this->MaximumNumberOfControlPoints = -1;
 

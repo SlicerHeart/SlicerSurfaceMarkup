@@ -74,12 +74,6 @@ public:
   /// Get markup type internal name
   const char* GetMarkupType() override {return "GridSurface";}
 
-  // Get markup type GUI display name
-  const char* GetTypeDisplayName() override {return "Grid Surface";};
-
-  /// Get markup short name
-  const char* GetDefaultNodeNamePrefix() override {return "GS";}
-
   /// Read node attributes from XML file
   void ReadXMLAttributes( const char** atts) override;
 
