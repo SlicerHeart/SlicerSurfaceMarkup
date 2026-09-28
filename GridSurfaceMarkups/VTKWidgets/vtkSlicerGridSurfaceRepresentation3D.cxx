@@ -42,14 +42,11 @@
 #include "vtkMRMLMarkupsGridSurfaceNode.h"
 
 // MRML includes
-#include <qMRMLThreeDWidget.h>
 #include <vtkMRMLDisplayableManagerGroup.h>
 #include <vtkMRMLModelDisplayableManager.h>
 #include <vtkMRMLTransformNode.h>
 
 // Slicer includes
-#include <qSlicerApplication.h>
-#include <qSlicerLayoutManager.h>
 
 // VTK includes
 #include <vtkActor.h>
